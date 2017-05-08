@@ -203,6 +203,14 @@ function addBlip() {
     startScale: scale
   });
 
+  group.on('mouseenter', function () {
+      stage.container().style.cursor = 'move'; // 'default', 'pointer', 'move', 'crosshair'
+  });
+
+  group.on('mouseleave', function () {
+      stage.container().style.cursor = 'default';
+  });
+
   var text = new Konva.Text({
     text: getNewBlipId().toString(),
     fontSize: 12,
