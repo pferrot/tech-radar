@@ -4,3 +4,13 @@ body {
   overflow: hidden;
   background-color: #F0F0F0;
 }
+
+#mainContainer {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+#stageContainer {
+  background-color: yellow;
+}

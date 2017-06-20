@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Title of the document</title>
+<title>LS Tech Radar</title>
+<link rel="stylesheet" type="text/css" href="css/tech-radar.css">
 <script src="javascript/jquery-3.2.1.min.js"></script>
 <script src="javascript/konva-1.6.1.min.js"></script>
 <script src="javascript/tech-radar.js"></script>
@@ -9,7 +10,13 @@
 
 <body>
 <button type="button" onclick="addBlip();">Add blip</button>
-<div id="container"></div>
+<button type="button" onclick="exportGraph();">Export graph</button>
+<input type="file" id="fileInputId" accept=".json"/>
+<a id="exportGraphAnchorElem" style="display:none"></a>
+
+<div id="mainContainer">
+<div id="stageContainer"></div>
+</div>
 </body>
 
 </html>

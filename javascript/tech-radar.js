@@ -16,10 +16,24 @@ var arcsLayer = undefined;
 // one for "platforms hold", one for "platforms assess", ...
 var arcs = [];
 
+var rings = [
+  {width: 110, color: '#999999', name: 'adopt'},
+  {width: 110, color: '#AAAAAA', name: 'trial'},
+  {width: 90, color: '#BBBBBB', name: 'assess'},
+  {width: 70, color: '#CCCCCC', name: 'hold'}
+];
+
+var quadrants = [
+  {name: 'languages_frameworks', blipsColor: 'pink', label: 'Languages &\nFrameworks'},
+  {name: 'platforms', blipsColor: 'orange', label: 'Platforms'},
+  {name: 'techniques', blipsColor: 'blue', label: 'Techniques'},
+  {name: 'tools', blipsColor: 'green', label: 'Tools'}
+];
+
 
 $( document ).ready(function() {
   stage = new Konva.Stage({
-    container: 'container',
+    container: 'stageContainer',
     width: width,
     height: height
   });
@@ -53,17 +67,28 @@ $( document ).ready(function() {
 
   stage.on('dragend', function(evt) {
     var shape = evt.target;
-    var circle = shape.find("Circle")[0];
-    //var pos = stage.getPointerPosition();
-    var arc = getArc(shape);
-    if (arc) {
-      circle.fill(arc.getAttr('blipsColor'));
-    }
-    else {
-      circle.fill(blipColorDefault);
-    }
-    shape.moveTo(blipsLayer);
-    stage.draw();
+    colorBlip(shape, true);
+  });
+
+  document.getElementById('fileInputId').addEventListener('change', loadGraph, false);
+  //addStars();
+
+
+});
+
+function colorBlip(theBlip, withEffect) {
+  var circle = theBlip.find("Circle")[0];
+  //var pos = stage.getPointerPosition();
+  var arc = getArc(theBlip);
+  if (arc) {
+    circle.fill(arc.getAttr('blipsColor'));
+  }
+  else {
+    circle.fill(blipColorDefault);
+  }
+  theBlip.moveTo(blipsLayer);
+  stage.draw();
+  if (withEffect) {
     circle.to({
       duration: 0.5,
       easing: Konva.Easings.ElasticEaseOut,
@@ -72,64 +97,65 @@ $( document ).ready(function() {
       shadowOffsetX: blipShadowOffsetX,
       shadowOffsetY: blipShadowOffsetY
     });
-  });
-
-
-  //addStars();
-
-
-});
-
-function getArc(shape) {
-  console.log("Circle pos: " + shape.getAttr('x') + ", " + shape.getAttr('y'));
-  console.log("Circle offset: " + shape.getAttr('offsetX') + ", " + shape.getAttr('offsetY'));
-  return arcsLayer.getIntersection({x: shape.getAttr('x'), y: shape.getAttr('y')});
+  }
 }
 
-function getRing(shape) {
-
+function getArc(shape) {
+  //console.log("Circle pos: " + shape.getAttr('x') + ", " + shape.getAttr('y'));
+  //console.log("Circle offset: " + shape.getAttr('offsetX') + ", " + shape.getAttr('offsetY'));
+  return arcsLayer.getIntersection({x: shape.getAttr('x'), y: shape.getAttr('y')});
 }
 
 function addQuadrants() {
   arcsLayer = new Konva.Layer();
-  var ring1Width = 110;
-  var ring2Width = 110;
-  var ring3Width = 90;
-  var ring4Width = 70;
-  var ring1 = {innerRadius: 0, outerRadius: ring1Width, color: '#999999', name: 'adopt'};
-  var ring2 = {innerRadius: ring1.outerRadius, outerRadius: ring1.outerRadius + ring2Width, color: '#AAAAAA', name: 'trial'};
-  var ring3 = {innerRadius: ring2.outerRadius, outerRadius: ring2.outerRadius + ring3Width, color: '#BBBBBB', name: 'assess'};
-  var ring4 = {innerRadius: ring3.outerRadius, outerRadius: ring3.outerRadius + ring4Width, color: '#CCCCCC', name: 'hold'};
-  var rings = [ring1, ring2, ring3, ring4];
+
+
   for (var i = 0; i < rings.length; i++) {
-     addQuadrant(arcsLayer, rings[i].innerRadius, rings[i].outerRadius, 90, 0, rings[i].color, rings[i].name, 'languages_frameworks', 'pink');
-     addQuadrant(arcsLayer, rings[i].innerRadius, rings[i].outerRadius, 90, 90, rings[i].color, rings[i].name, 'platforms', 'orange');
-     addQuadrant(arcsLayer, rings[i].innerRadius, rings[i].outerRadius, 90, 180, rings[i].color, rings[i].name, 'techniques', 'blue');
-     addQuadrant(arcsLayer, rings[i].innerRadius, rings[i].outerRadius, 90, 270, rings[i].color, rings[i].name, 'tools', 'green');
+    for (var j = 0; j < quadrants.length; j++) {
+      var innerRadius = 0;
+      for (var k = i - 1; k >= 0; k--) {
+        innerRadius += rings[k].width;
+      }
+      addQuadrant(arcsLayer, innerRadius, innerRadius + rings[i].width, 90, j * (360 / quadrants.length), rings[i].color, rings[i].name, quadrants[j].name, quadrants[j].blipsColor);
+    }
   }
 
   stage.add(arcsLayer);
   var quadrantsLabelsLayer = new Konva.Layer();
-  addQuadrantLabel('Languages &\nFrameworks', ring3.outerRadius + ring4Width, 1, 20, quadrantsLabelsLayer);
-  addQuadrantLabel('Platforms', ring3.outerRadius + ring4Width, 2, 20, quadrantsLabelsLayer);
-  addQuadrantLabel('Techniques', ring3.outerRadius + ring4Width, 3, 20, quadrantsLabelsLayer);
-  addQuadrantLabel('Tools', ring3.outerRadius + ring4Width, 4, 20, quadrantsLabelsLayer);
+  var radarRadius = getRadarRadius();
+  for (var j = 0; j < quadrants.length; j++) {
+    addQuadrantLabel(quadrants[j].label, radarRadius, j, 20, quadrantsLabelsLayer);
+  }
   stage.add(quadrantsLabelsLayer);
 }
 
+function getRadarRadius() {
+  var r = 0;
+  for (var i = 0; i < rings.length; i++) {
+    r += rings[i].width;
+  }
+  return r;
+}
+
 function addQuadrantLabel(label, outerRingRadius, quadrantIndex, offset, layer) {
-  var offsetX = outerRingRadius * (Math.sin(Math.PI / 4));
-  var offsetY = outerRingRadius * (Math.cos(Math.PI / 4));
-  if (quadrantIndex == 2) {
-    offsetX = -offsetX;
-  }
-  else if (quadrantIndex == 3) {
-    offsetX = -offsetX;
-    offsetY = -offsetY;
-  }
-  else if (quadrantIndex == 4) {
-    offsetY = -offsetY;
-  }
+  var twoPi = Math.PI * 2;
+  var oneQuadrantAngle = (twoPi / quadrants.length);
+  var quadrantStartAngle = quadrantIndex * oneQuadrantAngle;
+  //console.log("quadrantStartAngle: " + quadrantStartAngle);
+  var labelAngle = quadrantStartAngle + ((twoPi / quadrants.length) / 2);
+  //console.log("Label angel: " + labelAngle);
+  var theSin = Math.sin(labelAngle);
+  var theCos = Math.cos(labelAngle);
+  //console.log("Sin: " + theSin);
+  //console.log("Cos: " + theCos);
+  var offsetX = outerRingRadius * theSin;
+  var offsetY = outerRingRadius * theCos;
+  //if (theCos < 0) {
+  //  offsetX = -offsetX;
+  //}
+  //if (theSin < 0) {
+  //  offsetY = -offsetY;
+  //}
   var x = (stage.getWidth() / 2) + offsetX;
   var y = (stage.getHeight() / 2) + offsetY;
   var text = new Konva.Text({
@@ -144,20 +170,16 @@ function addQuadrantLabel(label, outerRingRadius, quadrantIndex, offset, layer) 
   var rect = text.getClientRect();
   var offsetX = 0;
   var offsetY = 0;
-  if (quadrantIndex == 1) {
+  if (theSin > 0) {
     offsetX = -offset;
+  }
+  else {
+    offsetX = rect.width + offset;
+  }
+  if (theCos > 0) {
     offsetY = -offset;
   }
-  else if (quadrantIndex == 2) {
-    offsetX = rect.width + offset;
-    offsetY = -offset;
-  }
-  else if (quadrantIndex == 3) {
-    offsetX = rect.width + offset;
-    offsetY = rect.height + offset;
-  }
-  else if (quadrantIndex == 4) {
-    offsetX = -offset;
+  else {
     offsetY = rect.height + offset;
   }
   text.setAttrs({
@@ -167,17 +189,36 @@ function addQuadrantLabel(label, outerRingRadius, quadrantIndex, offset, layer) 
   layer.add(text);
 }
 
-// TODO: get from DB (e.g. sequence)
 var newBlipId = 0;
 function getNewBlipId() {
   return ++newBlipId;
 }
 
-function addBlip() {
+function getValueOrDefault(theVal, theDefault) {
+  if (theVal !== undefined) {
+    return theVal;
+  }
+  else {
+    return theDefault;
+  }
+}
+
+function addBlip(thePosX, thePosY, theBlipId) {
+  var x = getValueOrDefault(thePosX, 50);
+  var y = getValueOrDefault(thePosY, 50);
+  // TODO: do not execute function if not needed.
+  //var blipId = getValueOrDefault(thePosX, getNewBlipId);
+  if (theBlipId !== undefined) {
+    var blipId = theBlipId;
+  }
+  else {
+    var blipId = getNewBlipId().toString();
+  }
+  //console.log("Adding blip ID " + blipId + "(" + x + ", " + y + ")");
   var group = new Konva.Group({
     // starting pos
-    x: 50,
-    y: 50,
+    x: x,
+    y: y,
     draggable: true
   });
 
@@ -212,7 +253,7 @@ function addBlip() {
   });
 
   var text = new Konva.Text({
-    text: getNewBlipId().toString(),
+    text: blipId,
     fontSize: 12,
     fontFamily: 'Calibri',
     fill: 'white'
@@ -228,8 +269,22 @@ function addBlip() {
   group.add(text);
   blipsLayer.add(group);
 
-  //blipsLayer.add(circle);
-  stage.draw();
+  colorBlip(group);
+
+  // This is done in colorBlip()
+  //stage.draw();
+
+
+}
+
+function clearBlips() {
+  if (blipsLayer) {
+    var result = {};
+    var blipGroups = blipsLayer.find('Group');
+    for (var i = 0; i < blipGroups.length; i++) {
+      blipGroups[i].destroy();
+    }
+  }
 }
 
 function addStars() {
@@ -324,4 +379,65 @@ function addStar(layer, stage) {
   });
 
   layer.add(star);
+}
+
+function exportGraph() {
+  if (blipsLayer) {
+    var result = {};
+    var blipGroups = blipsLayer.find('Group');
+    for (var i = 0; i < blipGroups.length; i++) {
+      var g = blipGroups[i];
+      var x = g.getAttr('x');
+      var y = g.getAttr('y');
+      var c = g.find('Circle')[0];
+      var t = g.find('Text')[0];
+      var blipId = t.getAttr('text');
+      result[blipId] = {'x': x, 'y': y};
+      //console.log("" + label + ": (" + x + ", " + y + ")");
+      //console.log("Circle: (" + c.getAttr('x') + ", " + c.getAttr('y') + ")");
+      //console.log("Text: (" + t.getAttr('x') + ", " + t.getAttr('y') + ")");
+    }
+    var stringifyResult = JSON.stringify(result);
+    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(stringifyResult);
+    var exportGraphAnchorElem = document.getElementById('exportGraphAnchorElem');
+    exportGraphAnchorElem.setAttribute("href", dataStr);
+    exportGraphAnchorElem.setAttribute("download", "lsTechRadar.json");
+    exportGraphAnchorElem.click();
+  }
+}
+
+function loadGraph(evt) {
+  if (window.File && window.FileReader && window.FileList && window.Blob) {
+    var files = evt.target.files; // FileList object
+    //Retrieve the first (and only!) File from the FileList object
+    var f = evt.target.files[0];
+
+    if (f) {
+      var maxBlipId = 0;
+      var r = new FileReader();
+      r.onload = function(e) {
+        clearBlips();
+	      var content = e.target.result;
+        //console.log("Got the file name " + f.name + ", size: " + f.size + " bytes")
+        //console.log(contents);
+        var json = JSON.parse(content);
+        //console.log("JSON: " + JSON.stringify(json));
+        for (var key in json) {
+          var blipId = parseInt(key);
+          if (blipId > maxBlipId) {
+            maxBlipId = blipId;
+          }
+          addBlip(json[key]['x'], json[key]['y'], blipId);
+        }
+        newBlipId = maxBlipId;
+      }
+      r.readAsText(f);
+    }
+    //else {
+    //  alert("Failed to load file");
+    //}
+  }
+  else {
+    alert('The File APIs are not fully supported in this browser.');
+  }
 }
