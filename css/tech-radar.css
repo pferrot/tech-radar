@@ -3,14 +3,39 @@ body {
   padding: 0;
   overflow: hidden;
   background-color: #F0F0F0;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
 }
 
 #mainContainer {
   align-items: center;
   display: flex;
   justify-content: center;
+  margin-top: 50px;
 }
 
 #stageContainer {
-  background-color: yellow;
+}
+
+.detailsContainer {
+  height: 400px;
+}
+
+.detailsTitle {
+  font-size: 20px;
+}
+
+.detailsRingTitle {
+  font-size: 16px;
+}
+
+.detailsBlip {
+  font-size: 12px;
+}
+
+#detailsLeft {
+  width: 250px;
+}
+
+#detailsRight {
+  width: 250px;
 }

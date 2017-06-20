@@ -1,4 +1,4 @@
-var width = 1000;
+var width = 900;
 var height = 800; //window.innerHeight;
 var blipColorDefault = 'grey';
 
@@ -17,10 +17,10 @@ var arcsLayer = undefined;
 var arcs = [];
 
 var rings = [
-  {width: 110, color: '#999999', name: 'adopt'},
-  {width: 110, color: '#AAAAAA', name: 'trial'},
-  {width: 90, color: '#BBBBBB', name: 'assess'},
-  {width: 70, color: '#CCCCCC', name: 'hold'}
+  {width: 110, color: '#999999', name: 'adopt', label: 'Adopt'},
+  {width: 110, color: '#AAAAAA', name: 'trial', label: 'Trial'},
+  {width: 90, color: '#BBBBBB', name: 'assess', label: 'Assess'},
+  {width: 70, color: '#CCCCCC', name: 'hold', label: 'Hold'}
 ];
 
 var quadrants = [
@@ -29,6 +29,8 @@ var quadrants = [
   {name: 'techniques', blipsColor: 'blue', label: 'Techniques'},
   {name: 'tools', blipsColor: 'green', label: 'Tools'}
 ];
+
+var detailsDivSuffix = "Details";
 
 
 $( document ).ready(function() {
@@ -47,6 +49,17 @@ $( document ).ready(function() {
 
   stage.on('dragstart', function(evt) {
     var shape = evt.target;
+    var arc = getArc(shape);
+    if (arc) {
+      var startDetailsDiv = "details_" + arc.getAttr('quadrantName') + "_" + arc.getAttr('ringName');
+      shape.setAttr("startDetailsDiv", startDetailsDiv);
+      console.log("Start details div: " + startDetailsDiv);
+    }
+    else {
+      shape.setAttr("startDetailsDiv", undefined);
+      console.log("Start details div is undefined");
+    }
+
     // moving to another layer will improve dragging performance
     shape.moveTo(blipsDragLayer);
     stage.draw();
@@ -73,7 +86,37 @@ $( document ).ready(function() {
   document.getElementById('fileInputId').addEventListener('change', loadGraph, false);
   //addStars();
 
+  for (var j = 0; j < quadrants.length ; j++) {
+    var newDiv = jQuery('<div/>', {
+      id: (quadrants[j].name + detailsDivSuffix),
+      class: 'detailsContainer'
+    });
+    var titleDiv = jQuery('<div/>', {
+      class: 'detailsTitle'
+    });
+    titleDiv.html(quadrants[j].label);
+    $(newDiv).append(titleDiv);
 
+    for (var k = 0; k < rings.length; k++) {
+      var ringDiv = jQuery('<div/>', {
+        class: 'detailsRing',
+        id: "details_" + quadrants[j].name + "_" + rings[k].name
+      });
+      var ringTitleDiv = jQuery('<div/>', {
+        class: 'detailsRingTitle'
+      });
+      ringTitleDiv.html(rings[k].label);
+      $(ringDiv).append(ringTitleDiv);
+      $(newDiv).append(ringDiv);
+    }
+
+    if (j == 0 || j == quadrants.length - 1) {
+      $("#detailsRight").prepend(newDiv);
+    }
+    else {
+      $("#detailsLeft").prepend(newDiv);
+    }
+  }
 });
 
 function colorBlip(theBlip, withEffect) {
@@ -82,9 +125,53 @@ function colorBlip(theBlip, withEffect) {
   var arc = getArc(theBlip);
   if (arc) {
     circle.fill(arc.getAttr('blipsColor'));
+    var endDetailsDiv = "details_" + arc.getAttr('quadrantName') + "_" + arc.getAttr('ringName');
+    console.log("End details div: " + endDetailsDiv);
   }
   else {
     circle.fill(blipColorDefault);
+    var endDetailsDiv = undefined;
+    console.log("End details div: " + endDetailsDiv);
+  }
+
+  var startDetailsDiv = theBlip.getAttr("startDetailsDiv");
+  // We need to update the details.
+  if (endDetailsDiv != startDetailsDiv) {
+    var blipId = theBlip.find("Text")[0].getAttr("text");
+    var blipIdInt = parseInt(blipId);
+    var blipLabel = theBlip.find("Text")[0].getAttr("label");
+    console.log("Blip ID: " + blipId);
+    // Remove from start.
+    if (startDetailsDiv) {
+      $("#" + startDetailsDiv).find("#blipDetails_" + blipId).remove();
+    }
+    // Add to target.
+    if (endDetailsDiv) {
+      var newBlipDetailsDiv = jQuery('<div/>', {
+        class: 'detailsBlip',
+        id: "blipDetails_" + blipId
+      });
+      newBlipDetailsDiv.html(blipId + ". " + blipLabel);
+      // Keep blips in ascending order (ID based).
+      var followingBlipId = undefined;
+      $("#" + endDetailsDiv).find(".detailsBlip").each(function() {
+        var elemId = $( this ).attr('id');
+        console.log("ElemID: " + elemId);
+        var currentBlipId = parseInt(elemId.substring("blipDetails_".length, elemId.length));
+        console.log("Current ID: " + currentBlipId);
+        if (currentBlipId > blipIdInt && (!followingBlipId || currentBlipId < followingBlipId))   {
+          followingBlipId = currentBlipId;
+        }
+      });
+      if (followingBlipId) {
+        console.log("Found following: " + followingBlipId);
+        $("#blipDetails_" + followingBlipId).before(newBlipDetailsDiv);
+      }
+      else {
+        console.log("No following found");
+        $("#" + endDetailsDiv).append(newBlipDetailsDiv);
+      }
+    }
   }
   theBlip.moveTo(blipsLayer);
   stage.draw();
@@ -109,7 +196,6 @@ function getArc(shape) {
 function addQuadrants() {
   arcsLayer = new Konva.Layer();
 
-
   for (var i = 0; i < rings.length; i++) {
     for (var j = 0; j < quadrants.length; j++) {
       var innerRadius = 0;
@@ -121,12 +207,15 @@ function addQuadrants() {
   }
 
   stage.add(arcsLayer);
+
   var quadrantsLabelsLayer = new Konva.Layer();
   var radarRadius = getRadarRadius();
+
   for (var j = 0; j < quadrants.length; j++) {
     addQuadrantLabel(quadrants[j].label, radarRadius, j, 20, quadrantsLabelsLayer);
   }
   stage.add(quadrantsLabelsLayer);
+
 }
 
 function getRadarRadius() {
@@ -156,6 +245,7 @@ function addQuadrantLabel(label, outerRingRadius, quadrantIndex, offset, layer) 
   //if (theSin < 0) {
   //  offsetY = -offsetY;
   //}
+
   var x = (stage.getWidth() / 2) + offsetX;
   var y = (stage.getHeight() / 2) + offsetY;
   var text = new Konva.Text({
@@ -182,10 +272,26 @@ function addQuadrantLabel(label, outerRingRadius, quadrantIndex, offset, layer) 
   else {
     offsetY = rect.height + offset;
   }
+  // Have label far enough so that blip details can be displayed below it.
+  if (offsetX > 0) {
+    offsetX = offsetX + 250;
+  }
+  else {
+    offsetX = offsetX - 250;
+  }
+
   text.setAttrs({
     x: x - offsetX,
     y: y - offsetY
   });
+
+  //arcs[quadrantIndex].setAttr("labelPos", {"x": text.getAttr('x'), "y": text.getAttr('y')});
+
+  // Add the attribute for each ring.
+  for (var i = 0; i < rings.length; i++) {
+    arcs[(quadrantIndex + (i * rings.length))].setAttr('labelPos', {"x": text.getAttr('x'), "y": text.getAttr('y')});
+  }
+
   layer.add(text);
 }
 
@@ -203,7 +309,16 @@ function getValueOrDefault(theVal, theDefault) {
   }
 }
 
-function addBlip(thePosX, thePosY, theBlipId) {
+function addBlip(thePosX, thePosY, theBlipId, theLabel) {
+  if (!theLabel) {
+    var label = prompt("Please enter blip label?", "");
+  }
+  else {
+    var label = theLabel;
+  }
+  if (!label) {
+    return;
+  }
   var x = getValueOrDefault(thePosX, 50);
   var y = getValueOrDefault(thePosY, 50);
   // TODO: do not execute function if not needed.
@@ -256,7 +371,8 @@ function addBlip(thePosX, thePosY, theBlipId) {
     text: blipId,
     fontSize: 12,
     fontFamily: 'Calibri',
-    fill: 'white'
+    fill: 'white',
+    label: label
   });
 
   var textClientRect = text.getClientRect();
@@ -284,6 +400,7 @@ function clearBlips() {
     for (var i = 0; i < blipGroups.length; i++) {
       blipGroups[i].destroy();
     }
+    $(".detailsBlip").remove();
   }
 }
 
@@ -392,7 +509,7 @@ function exportGraph() {
       var c = g.find('Circle')[0];
       var t = g.find('Text')[0];
       var blipId = t.getAttr('text');
-      result[blipId] = {'x': x, 'y': y};
+      result[blipId] = {'x': x, 'y': y, 'label': t.getAttr('label')};
       //console.log("" + label + ": (" + x + ", " + y + ")");
       //console.log("Circle: (" + c.getAttr('x') + ", " + c.getAttr('y') + ")");
       //console.log("Text: (" + t.getAttr('x') + ", " + t.getAttr('y') + ")");
@@ -427,7 +544,7 @@ function loadGraph(evt) {
           if (blipId > maxBlipId) {
             maxBlipId = blipId;
           }
-          addBlip(json[key]['x'], json[key]['y'], blipId);
+          addBlip(json[key]['x'], json[key]['y'], blipId, json[key]['label']);
         }
         newBlipId = maxBlipId;
       }
