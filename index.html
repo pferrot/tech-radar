@@ -4,21 +4,49 @@
 <title>LS Tech Radar</title>
 <link rel="stylesheet" type="text/css" href="css/tech-radar.css">
 <script src="javascript/jquery-3.2.1.min.js"></script>
+
+<script src="javascript/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
+<link rel="stylesheet" type="text/css" href="javascript/jquery-ui-1.12.1.custom/jquery-ui.min.css">
+<link rel="stylesheet" type="text/css" href="javascript/jquery-ui-1.12.1.custom/jquery-ui.min.css">
+<link rel="stylesheet" type="text/css" href="javascript/jquery-ui-1.12.1.custom/jquery-ui.structure.min.css">
+<link rel="stylesheet" type="text/css" href="javascript/jquery-ui-1.12.1.custom/jquery-ui.theme.min.css">
+
 <script src="javascript/konva-1.6.1.min.js"></script>
 <script src="javascript/tech-radar.js"></script>
 </head>
 
 <body>
-<button type="button" onclick="addBlip();">Add blip</button>
-<button type="button" onclick="exportGraph();">Export graph</button>
-<input type="file" id="fileInputId" accept=".json"/>
+<button id="addBlipButtonId" type="button" onclick="openAddNewBlipDialog();" style="display: none;">Add blip</button>
+<button id="reorderBlipsButtonId" type="button" onclick="reorderBlips();" style="display: none;">Reorder blips</button>
+<button id="exportGraphButtonId" type="button" onclick="exportGraph();" style="display: none;">Export graph</button>
+<input id="importGraphFileInputId" type="file" accept=".json" style="display: none;"/>
 <a id="exportGraphAnchorElem" style="display:none"></a>
+<button id="toggleCanEditButtonIt" type="button" onclick="toggleCanEdit();">Toggle edit mode</button>
 
 <div id="mainContainer">
 <div id="detailsLeft"></div>
 <div id="stageContainer"></div>
 <div id="detailsRight"></div>
 </div>
+
+<div id="newBlipDialog" title="Create new blip" style="display: none">
+  <p class="newBlipValidateTips">All form fields are required.</p>
+  <form>
+    <fieldset>
+      <label for="newBlipLabel">Label</label>
+      <input type="text" name="newBlipLabel" id="newBlipLabel" value="" class="text ui-widget-content ui-corner-all">
+      <label for="newBlipDescription">Description</label>
+      <textarea rows="15" name="newBlipDescription" id="newBlipDescription" class="text ui-widget-content ui-corner-all"></textarea>
+      <!-- Allow form submission with keyboard without duplicating the dialog button -->
+      <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+    </fieldset>
+  </form>
+</div>
+
+<div id="viewBlipDialog" title="Blip details" style="display: none">
+  <span id="viewBlipDescription"></p>
+</div>
+
 </body>
 
 </html>
