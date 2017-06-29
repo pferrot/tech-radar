@@ -20,6 +20,8 @@ var stage = undefined;
 var blipsLayer = undefined;
 var blipsDragLayer = undefined;
 var arcsLayer = undefined;
+var tooltipLayer = undefined;
+var tooltip = undefined;
 // List of all arcs forming all the quadrants, i.e.
 // one for "platforms hold", one for "platforms assess", ...
 var arcs = [];
@@ -27,8 +29,8 @@ var arcs = [];
 var canEdit = false;
 
 var rings = [
-  {width: 110, color: '#999999', name: 'adopt', label: 'Adopt', blipsNumberingOrder: 1},
-  {width: 110, color: '#AAAAAA', name: 'trial', label: 'Trial', blipsNumberingOrder: 2},
+  {width: 130, color: '#999999', name: 'adopt', label: 'Adopt', blipsNumberingOrder: 1},
+  {width: 100, color: '#AAAAAA', name: 'trial', label: 'Trial', blipsNumberingOrder: 2},
   {width: 90, color: '#BBBBBB', name: 'assess', label: 'Assess', blipsNumberingOrder: 3},
   {width: 70, color: '#CCCCCC', name: 'hold', label: 'Hold', blipsNumberingOrder: 4}
 ];
@@ -54,8 +56,39 @@ $( document ).ready(function() {
 
   blipsLayer = new Konva.Layer();
   blipsDragLayer = new Konva.Layer();
+  tooltipLayer = new Konva.Layer();
+  tooltip = new Konva.Group({
+    id: "tooltip_blips",
+    visible: false
+  });
+  var text = new Konva.Text({
+      text: "",
+      fontFamily: "Lato",
+      fontSize: 16,
+      padding: 5,
+      textFill: "white",
+      fill: "black",
+      alpha: 0
+  });
+  var textClientRect = text.getClientRect();
+  text.setAttrs({
+    x: - textClientRect.width / 2,
+    y: - textClientRect.height / 2
+  });
+  var rect = new Konva.Rect({
+    x: - textClientRect.width / 2,
+    y: - textClientRect.height / 2,
+    width: textClientRect.width,
+    height: textClientRect.height,
+    fill: 'rgba(255,255,255,0.8)',
+    stroke: 'rgba(0,0,0,0.2)',
+    strokeWidth: 1
+  });
+  tooltip.add(rect);
+  tooltip.add(text);
+  tooltipLayer.add(tooltip);
 
-  stage.add(blipsLayer, blipsDragLayer);
+  stage.add(blipsLayer, blipsDragLayer, tooltipLayer);
 
   stage.on('dragstart', function(evt) {
     var shape = evt.target;
@@ -614,6 +647,34 @@ function getNewBlipId() {
   return ++newBlipId;
 }
 
+function showTooltip(theBlip) {
+  //var mousePos = stage.getPointerPosition();
+  tooltip.position({
+      //x : mousePos.x + 20,
+      //y : mousePos.y - 20
+      x: theBlip.getAttr('x') + 15,
+      y: theBlip.getAttr('y') - 15
+  });
+  var label = theBlip.find("Text")[0].getAttr("label");
+
+  var text = tooltip.find("Text")[0];
+  text.text(label);
+  var textClientRect = text.getClientRect();
+
+  var rect = tooltip.find("Rect")[0];
+  rect.setAttrs({
+    width: textClientRect.width,
+    height: textClientRect.height,
+  });
+  tooltip.show();
+  tooltipLayer.batchDraw();
+}
+
+function hideTooltip(theBlip) {
+  tooltip.hide();
+  tooltipLayer.draw();
+}
+
 function highlightDetailsFromBlip(theBlip) {
   highlightDetails(getDetailsDivFromBlip(theBlip));
 }
@@ -938,12 +999,17 @@ function addBlip(thePosX, thePosY, theBlipId, theLabel, theDescription, theShape
       if (canEdit) {
         stage.container().style.cursor = 'move'; // 'default', 'pointer', 'move', 'crosshair'
       }
+      else {
+        stage.container().style.cursor = 'pointer'; // 'default', 'pointer', 'move', 'crosshair'
+      }
       highlightDetailsFromBlip(this);
+      showTooltip(this);
   });
 
   group.on('mouseleave', function () {
       stage.container().style.cursor = 'default';
       unhighlightDetailsFromBlip(this);
+      hideTooltip(this);
   });
 
   group.on('click', function() {

@@ -63,6 +63,7 @@ body {
 
 .detailsBlip {
   font-size: 12px;
+  cursor: pointer;
 }
 
 .highlightedDetails {
