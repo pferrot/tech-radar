@@ -21,7 +21,6 @@
 
 <body>
 <div id="buttonsDiv">
-<button id="toggleCanEditButtonId" type="button" onclick="toggleCanEdit();"></button>
 <button id="addBlipButtonId" class="normalButton" type="button" onclick="openAddNewBlipDialog();" style="display: none;">Add blip...</button>
 <button id="reorderBlipsButtonId" class="normalButton" type="button" onclick="reorderBlips();" style="display: none;">Reorder blips</button>
 <button id="exportRadarButtonId" class="normalButton" type="button" onclick="exportRadar();" style="display: none;">Export radar...</button>
@@ -30,7 +29,10 @@
 <input id="importRadarFileInputId" type="file" accept=".json" style="display: none;"/>
 </div>
 <a id="exportRadarAnchorElem" style="display:none"></a>
+<button id="toggleCanEditButtonId" type="button" onclick="toggleCanEdit();"></button>
 </div>
+
+<div id="mainTitleDiv"><div id="mainTitleInternalDiv"></div></div>
 
 <div id="mainContainer">
 <div id="detailsLeft"></div>

@@ -1,5 +1,5 @@
 var defaultRadarUrl = "radars/lsTechRadar.json";
-var defaultRadarJson = '{"blips":{"1":{"x":399,"y":449,"label":"AWS","shape":"circle"},"2":{"x":294,"y":477,"label":"GCP","shape":"circle"},"3":{"x":500,"y":358,"label":"Grafana","shape":"circle"},"4":{"x":386,"y":364,"label":"Trunk based development","shape":"circle"},"5":{"x":408,"y":319,"label":"dsfvdsf","description":"","shape":"circle"},"6":{"x":326,"y":78,"label":"sdfv","description":"","shape":"circle"},"7":{"x":304,"y":328,"label":"sdfv","description":"","shape":"circle"},"8":{"x":371,"y":114,"label":"sdfvsdv","description":"","shape":"circle"},"9":{"x":326,"y":285,"label":"sdfbsdfb","description":"","shape":"circle"},"10":{"x":299,"y":214,"label":"sdfbsdb","description":"","shape":"circle"},"11":{"x":180,"y":320,"label":"sdfbsdfbsdfb","description":"","shape":"circle"},"12":{"x":164,"y":257,"label":"sdfbsdfbsdfb","description":"","shape":"circle"},"13":{"x":326,"y":184,"label":"sdfbsdfbsdfb","description":"","shape":"circle"},"14":{"x":239,"y":241,"label":"sdfbsdfbdsb","description":"","shape":"circle"},"15":{"x":399,"y":230,"label":"sdbdsfbsdb sd fbsdf bdfsbsdfbsdfb sdfb","description":"","shape":"circle"},"16":{"x":262,"y":184,"label":"sdfbsd b sdfbsd","description":"","shape":"circle"},"17":{"x":286,"y":193,"label":"sdb sdfb","description":"","shape":"circle"},"18":{"x":381,"y":172,"label":"sdf bsdfb","description":"","shape":"circle"},"19":{"x":103,"y":347,"label":"sdf bsdfbsdfbsdf ","description":"","shape":"circle"},"20":{"x":354,"y":240,"label":"s bsdfbsd fbsdf","description":"","shape":"circle"},"21":{"x":193,"y":180,"label":"sd bsdfbsdfb sdfb","description":"","shape":"circle"},"22":{"x":250,"y":324,"label":" sdfbsdfb sdfbsdb","description":"","shape":"circle"},"23":{"x":426,"y":139,"label":"sdfb sdfb","description":"","shape":"circle"},"24":{"x":417,"y":75,"label":"s dfbsdfb","description":"","shape":"circle"},"25":{"x":272,"y":104,"label":"s dfbsdfbsdfb","description":"","shape":"circle"},"26":{"x":314,"y":112,"label":" sdfbsdfbsdfb","description":"","shape":"circle"}},"quadrants":["TechniquesDDD","Platforms","Tools","Languages & Frameworks"]}';
+var defaultRadarJson = '{"mainTitle": "Test radar","blips":{"1":{"x":399,"y":449,"label":"AWS","shape":"circle"},"2":{"x":294,"y":477,"label":"GCP","shape":"circle"},"3":{"x":500,"y":358,"label":"Grafana","shape":"circle"},"4":{"x":386,"y":364,"label":"Trunk based development","shape":"circle"},"5":{"x":408,"y":319,"label":"dsfvdsf","description":"","shape":"circle"},"6":{"x":326,"y":78,"label":"sdfv","description":"","shape":"circle"},"7":{"x":304,"y":328,"label":"sdfv","description":"","shape":"circle"},"8":{"x":371,"y":114,"label":"sdfvsdv","description":"","shape":"circle"},"9":{"x":326,"y":285,"label":"sdfbsdfb","description":"","shape":"circle"},"10":{"x":299,"y":214,"label":"sdfbsdb","description":"","shape":"circle"},"11":{"x":180,"y":320,"label":"sdfbsdfbsdfb","description":"","shape":"circle"},"12":{"x":164,"y":257,"label":"sdfbsdfbsdfb","description":"","shape":"circle"},"13":{"x":326,"y":184,"label":"sdfbsdfbsdfb","description":"","shape":"circle"},"14":{"x":239,"y":241,"label":"sdfbsdfbdsb","description":"","shape":"circle"},"15":{"x":399,"y":230,"label":"sdbdsfbsdb sd fbsdf bdfsbsdfbsdfb sdfb","description":"","shape":"circle"},"16":{"x":262,"y":184,"label":"sdfbsd b sdfbsd","description":"","shape":"circle"},"17":{"x":286,"y":193,"label":"sdb sdfb","description":"","shape":"circle"},"18":{"x":381,"y":172,"label":"sdf bsdfb","description":"","shape":"circle"},"19":{"x":103,"y":347,"label":"sdf bsdfbsdfbsdf ","description":"","shape":"circle"},"20":{"x":354,"y":240,"label":"s bsdfbsd fbsdf","description":"","shape":"circle"},"21":{"x":193,"y":180,"label":"sd bsdfbsdfb sdfb","description":"","shape":"circle"},"22":{"x":250,"y":324,"label":" sdfbsdfb sdfbsdb","description":"","shape":"circle"},"23":{"x":426,"y":139,"label":"sdfb sdfb","description":"","shape":"circle"},"24":{"x":417,"y":75,"label":"s dfbsdfb","description":"","shape":"circle"},"25":{"x":272,"y":104,"label":"s dfbsdfbsdfb","description":"","shape":"circle"},"26":{"x":314,"y":112,"label":" sdfbsdfbsdfb","description":"","shape":"circle"}},"quadrants":["TechniquesDDD","Platforms","Tools","Languages & Frameworks"]}';
 
 var width = 900;
 var height = 800; //window.innerHeight;
@@ -225,8 +225,29 @@ function makeDetailsTitleEditable(theVal) {
       $( this ).show();
     }
   });
-
 }
+
+function makeMainTitleEditable(theVal) {
+  var makeEditable = undefined;
+  if (theVal === undefined) {
+    makeEditable = true;
+  }
+  else {
+    makeEditable = theVal;
+  }
+  $("#mainTitleInternalDiv").each(function( index ) {
+    if (makeEditable) {
+      $( this ).hide();
+      $( this ).after($('<input/>').attr({ type: 'text', class: 'mainTitleInput', value: $(this).text()}));
+    }
+    else {
+      $( this ).html($( this ).next().val());
+      $( this ).next().remove();
+      $( this ).show();
+    }
+  });
+}
+
 
 function toggleCanEdit() {
   if (!canEdit) {
@@ -237,6 +258,7 @@ function toggleCanEdit() {
     $("#fileProxy").show();
     makeBlipsDraggable();
     makeDetailsTitleEditable();
+    makeMainTitleEditable();
   }
   else {
     $("#addBlipButtonId").hide();
@@ -246,6 +268,7 @@ function toggleCanEdit() {
     $("#fileProxy").hide();
     makeBlipsDraggable(false);
     makeDetailsTitleEditable(false);
+    makeMainTitleEditable(false);
   }
   canEdit = !canEdit;
 }
@@ -873,7 +896,7 @@ function getNewShape(theShapeType) {
         context.fillStrokeShape(this);
       },
       offsetX: 13,
-      offsetY: 15,
+      offsetY: 18,
       fill: blipColorDefault,
       stroke: 'black',
       strokeWidth: 1,
@@ -1058,6 +1081,7 @@ function exportRadar() {
     });
 
     result['quadrants'] = quadrants;
+    result['mainTitle'] = $("#mainTitleInternalDiv").text();
     var stringifyResult = JSON.stringify(result);
     var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(stringifyResult);
     var exportRadarAnchorElem = document.getElementById('exportRadarAnchorElem');
@@ -1068,6 +1092,7 @@ function exportRadar() {
 }
 
 function loadRadarFromJson(json) {
+  //console.log("Loading radar from json!")
   var maxBlipId = 0;
   clearBlips();
   var blips = json['blips'];
@@ -1082,16 +1107,26 @@ function loadRadarFromJson(json) {
   var quadrants = json['quadrants'];
   $(".detailsTitle").each(function( index ) {
     if (!canEdit) {
-      $( this ).html(quadrants[index]);
+      $( this ).text(quadrants[index]);
     }
     else {
-      $( this ).next().val(quadrants[index]);
+      console.log("Details title: " + quadrants[index]);
+      $( this ).next("input").val(quadrants[index]);
     }
   });
 
+  if (!canEdit) {
+    $("#mainTitleInternalDiv").text(json['mainTitle']);
+  }
+  else {
+    $("#mainTitleInternalDiv").next("input").val(json['mainTitle']);
+  }
+
   newBlipId = maxBlipId;
 }
+
 function loadRadar(evt) {
+  console.log("TADADA");
   if (window.File && window.FileReader && window.FileList && window.Blob) {
     var files = evt.target.files; // FileList object
     //Retrieve the first (and only!) File from the FileList object

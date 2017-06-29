@@ -12,13 +12,29 @@ body {
 
 #buttonsDiv {
   margin: 5px;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+#mainTitleDiv {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  font-size: 50px;
+  font-weight: bold;
+  height: 60px;
+}
+
+.mainTitleInput {
+  width: 400px;
 }
 
 #mainContainer {
   align-items: center;
   display: flex;
   justify-content: center;
-  margin-top: 50px;
+  margin-top: 30px;
 }
 
 #stageContainer {
