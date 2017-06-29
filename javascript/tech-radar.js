@@ -2,6 +2,11 @@ var width = 900;
 var height = 800; //window.innerHeight;
 var blipColorDefault = 'grey';
 
+var labelMinLength = 1;
+var labelMaxLength = 50;
+var descriptionMinLength = 0;
+var descriptionMaxLength = 500;
+
 var blipShadowEnabled = false;
 var blipShadowOffsetX = 2;
 var blipShadowOffsetY = 2;
@@ -26,7 +31,7 @@ var rings = [
 ];
 
 var quadrants = [
-  {name: 'languages_frameworks', blipsColor: 'pink', label: 'Languages &\nFrameworks', blipsNumberingOrder: 4},
+  {name: 'languages_frameworks', blipsColor: 'pink', label: 'Languages & Frameworks', blipsNumberingOrder: 4},
   {name: 'platforms', blipsColor: 'orange', label: 'Platforms', blipsNumberingOrder: 3},
   {name: 'techniques', blipsColor: 'blue', label: 'Techniques', blipsNumberingOrder: 1},
   {name: 'tools', blipsColor: 'green', label: 'Tools', blipsNumberingOrder: 2}
@@ -48,6 +53,28 @@ function makeBlipsDraggable(theVal) {
   }
 }
 
+function makeDetailsTitleEditable(theVal) {
+  var makeEditable = undefined;
+  if (theVal === undefined) {
+    makeEditable = true;
+  }
+  else {
+    makeEditable = theVal;
+  }
+  $(".detailsTitle").each(function( index ) {
+    if (makeEditable) {
+      $( this ).hide();
+      $( this ).after($('<input/>').attr({ type: 'text', class: 'detailsTitleInput', value: $(this).text()}));
+    }
+    else {
+      $( this ).html($( this ).next().val());
+      $( this ).next().remove();
+      $( this ).show();
+    }
+  });
+
+}
+
 function toggleCanEdit() {
   if (!canEdit) {
     $("#addBlipButtonId").show();
@@ -55,6 +82,7 @@ function toggleCanEdit() {
     $("#exportGraphButtonId").show();
     $("#importGraphFileInputId").show();
     makeBlipsDraggable();
+    makeDetailsTitleEditable();
   }
   else {
     $("#addBlipButtonId").hide();
@@ -62,6 +90,7 @@ function toggleCanEdit() {
     $("#exportGraphButtonId").hide();
     $("#importGraphFileInputId").hide();
     makeBlipsDraggable(false);
+    makeDetailsTitleEditable(false);
   }
   canEdit = !canEdit;
 }
@@ -181,6 +210,7 @@ $( document ).ready(function() {
 
   initNewBlipDialog();
   initViewBlipDialog();
+  initEditBlipDialog();
 });
 
 function getBlipById(blipId) {
@@ -315,9 +345,13 @@ function colorBlipAndSetupDetailsDiv(theBlip, withEffect) {
         id: "blipDetails_" + blipId
       });
       newBlipDetailsDiv.hover(detailsDivIn, detailsDivOut);
-      newBlipDetailsDiv.html(blipId + ". " + blipLabel);
       newBlipDetailsDiv.click(function() {
-        openViewBlipDialog(blipId);
+        if (!canEdit) {
+          openViewBlipDialog(blipId);
+        }
+        else {
+          openEditBlipDialog(blipId);
+        }
       });
       // Keep blips in ascending order (ID based).
       var followingBlipId = undefined;
@@ -338,6 +372,9 @@ function colorBlipAndSetupDetailsDiv(theBlip, withEffect) {
         //console.log("No following found");
         $("#" + endDetailsDiv).append(newBlipDetailsDiv);
       }
+      // Need to update the label *after* the div has been added to the DOM since we
+      // search it by ID in 'updateBlipLabel'.
+      updateBlipLabel(blipId, blipLabel);
     }
   }
 }
@@ -469,8 +506,8 @@ function unhighlightDetails(theBlip) {
   }
 }
 
-function updateTips( t ) {
-  var tips = $( ".newBlipValidateTips" );
+function updateTips( t, tipsClass ) {
+  var tips = $( "." + tipsClass );
   tips
     .text( t )
     .addClass( "ui-state-highlight" );
@@ -479,11 +516,10 @@ function updateTips( t ) {
   }, 500 );
 }
 
-function checkLength( o, n, min, max ) {
+function checkLength( o, n, min, max, tipsClass ) {
   if ( o.val().length > max || o.val().length < min ) {
     o.addClass( "ui-state-error" );
-    updateTips( "Length of " + n + " must be between " +
-      min + " and " + max + "." );
+    updateTips( "Length of " + n + " must be between " + min + " and " + max + ".", tipsClass );
     return false;
   } else {
     return true;
@@ -512,6 +548,7 @@ function initNewBlipDialog() {
         close: function() {
           newBlipForm[ 0 ].reset();
           allFields.removeClass( "ui-state-error" );
+          tips.html("");
         }
       });
 
@@ -526,6 +563,62 @@ function openAddNewBlipDialog() {
   newBlipDialog.dialog( "open" );
 }
 
+var editBlipDialog = undefined;
+var editBlipForm = undefined;
+function initEditBlipDialog() {
+  var editBlipLabel = $( "#editBlipLabel" );
+  var editBlipDescription = $( "#editBlipDescription" );
+  var allFields = $( [] ).add( editBlipLabel ).add( editBlipDescription );
+  var tips = $( ".editBlipValidateTips" );
+
+  editBlipDialog = $( "#editBlipDialog" ).dialog({
+        autoOpen: false,
+        height: 600,
+        width: 500,
+        modal: true,
+        buttons: {
+          "Save": editBlip,
+          Cancel: function() {
+            editBlipDialog.dialog( "close" );
+          }
+        },
+        close: function() {
+          editBlipForm[ 0 ].reset();
+          allFields.removeClass( "ui-state-error" );
+          tips.html("");
+        }
+      });
+
+  editBlipForm = editBlipDialog.find( "form" );
+  editBlipForm.on( "submit", function( event ) {
+    event.preventDefault();
+    editBlip();
+  });
+}
+
+function openEditBlipDialog(theBlipId) {
+  $("#editBlipIdHidden").val(theBlipId);
+  var theBlip = getBlipById(theBlipId);
+  var c = theBlip.find('Circle')[0];
+  var t = theBlip.find('Text')[0];
+  //var blipId = t.getAttr('text');
+  var blipLabel = t.getAttr('label');
+  if (blipLabel) {
+    $("#editBlipLabel").val(blipLabel);
+  }
+  else {
+    $("#editBlipLabel").val("");
+  }
+  var blipDescription = t.getAttr('description');
+  if (blipDescription) {
+    $("#editBlipDescription").val(blipDescription);
+  }
+  else {
+    $("#editBlipDescription").val("");
+  }
+  editBlipDialog.dialog( "open" );
+}
+
 var viewBlipDialog = undefined;
 
 function initViewBlipDialog() {
@@ -536,19 +629,13 @@ function initViewBlipDialog() {
         modal: true,
         buttons: {
           "Close": function() {
-            newBlipDialog.dialog( "close" );
+            viewBlipDialog.dialog( "close" );
           }
         }
       });
 }
 
 function openViewBlipDialog(theBlipId) {
-
-  var newBlipLabel = $( "#newBlipLabel" );
-  var newBlipDescription = $( "#newBlipDescription" );
-  //viewBlipLabel.html("");
-  //viewBlipDescription.html("");
-
   var theBlip = getBlipById(theBlipId);
   var c = theBlip.find('Circle')[0];
   var t = theBlip.find('Text')[0];
@@ -558,7 +645,15 @@ function openViewBlipDialog(theBlipId) {
   var viewBlipLabel = $( "#viewBlipLabel" );
   var viewBlipDescription = $( "#viewBlipDescription" );
   $( "#viewBlipDialog" ).dialog( "option", "title", blipLabel );
-  viewBlipDescription.html(blipDescription);
+  if (blipDescription) {
+    viewBlipDescription.text(blipDescription);
+    viewBlipDescription.linkify({
+        target: "_blank"
+    });
+  }
+  else {
+    viewBlipDescription.html("<i>No description available</i>");
+  }
 
   viewBlipDialog.dialog( "open" );
 }
@@ -571,8 +666,8 @@ function addNewBlip() {
   var valid = true;
   allFields.removeClass( "ui-state-error" );
 
-  valid = valid && checkLength( newBlipLabel, "'label'", 3, 16 );
-  valid = valid && checkLength( newBlipDescription, "'description'", 6, 80 );
+  valid = valid && checkLength(newBlipLabel, "'label'", labelMinLength, labelMaxLength, "newBlipValidateTips");
+  valid = valid && checkLength(newBlipDescription, "'description'", descriptionMinLength, descriptionMaxLength, "newBlipValidateTips");
 
   if ( valid ) {
     var result = {};
@@ -582,6 +677,37 @@ function addNewBlip() {
     addBlip(50, 50, getNewBlipId().toString(), result.label, result.description);
   }
   return valid;
+}
+
+function editBlip() {
+  var editBlipLabel = $( "#editBlipLabel" );
+  var editBlipDescription = $( "#editBlipDescription" );
+  var allFields = $( [] ).add( editBlipLabel ).add( editBlipDescription );
+
+  var valid = true;
+  allFields.removeClass( "ui-state-error" );
+
+  valid = valid && checkLength(editBlipLabel, "'label'", labelMinLength, labelMaxLength, "editBlipValidateTips");
+  valid = valid && checkLength(editBlipDescription, "'description'", descriptionMinLength, descriptionMaxLength, "editBlipValidateTips");
+
+  if ( valid ) {
+    var result = {};
+    result.label = editBlipLabel.val();
+    result.description = editBlipDescription.val();
+    editBlipDialog.dialog( "close" );
+    updateBlipLabel( $( "#editBlipIdHidden" ).val(), result.label);
+    updateBlipDescription( $( "#editBlipIdHidden" ).val(), result.description);
+  }
+  return valid;
+}
+
+function updateBlipLabel(theBlipId, theLabel) {
+  $("#blipDetails_" + theBlipId).html(theBlipId + ". " + theLabel);
+  getBlipById(theBlipId).find("Text")[0].setAttr("label", theLabel);
+}
+
+function updateBlipDescription(theBlipId, theDescription) {
+  getBlipById(theBlipId).find("Text")[0].setAttr("description", theDescription);
 }
 
 function addBlip(thePosX, thePosY, theBlipId, theLabel) {
@@ -628,6 +754,21 @@ function addBlip(thePosX, thePosY, theBlipId, theLabel) {
       stage.container().style.cursor = 'default';
       unhighlightDetails(this);
   });
+
+  group.on('click', function() {
+    if (!canEdit) {
+      openViewBlipDialog(getBlipId(this));
+    }
+    else {
+      openEditBlipDialog(getBlipId(this));
+    }
+  });
+
+  //group.on('dblclick', function() {
+  //  if (canEdit) {
+  //    openViewBlipDialog(getBlipId(this));
+  //  }
+  //});
 
   var text = new Konva.Text({
     text: theBlipId,
@@ -763,6 +904,7 @@ function addStar(layer, stage) {
 function exportGraph() {
   if (blipsLayer) {
     var result = {};
+    var blips = {};
     var blipGroups = blipsLayer.find('Group');
     for (var i = 0; i < blipGroups.length; i++) {
       var g = blipGroups[i];
@@ -771,11 +913,24 @@ function exportGraph() {
       var c = g.find('Circle')[0];
       var t = g.find('Text')[0];
       var blipId = t.getAttr('text');
-      result[blipId] = {'x': x, 'y': y, 'label': t.getAttr('label')};
+      blips[blipId] = {'x': x, 'y': y, 'label': t.getAttr('label'), 'description': t.getAttr('description')};
       //console.log("" + label + ": (" + x + ", " + y + ")");
       //console.log("Circle: (" + c.getAttr('x') + ", " + c.getAttr('y') + ")");
       //console.log("Text: (" + t.getAttr('x') + ", " + t.getAttr('y') + ")");
     }
+    result['blips'] = blips;
+    var quadrants = [];
+    $(".detailsTitle").each(function( index ) {
+      // Take the value of the input field if we are in edit mode, from the div otherwise.
+      if (!canEdit) {
+        quadrants.push($(this).text());
+      }
+      else {
+        quadrants.push($( this ).next().val());
+      }
+    });
+
+    result['quadrants'] = quadrants;
     var stringifyResult = JSON.stringify(result);
     var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(stringifyResult);
     var exportGraphAnchorElem = document.getElementById('exportGraphAnchorElem');
@@ -800,14 +955,25 @@ function loadGraph(evt) {
         //console.log("Got the file name " + f.name + ", size: " + f.size + " bytes")
         //console.log(contents);
         var json = JSON.parse(content);
+        var blips = json['blips'];
         //console.log("JSON: " + JSON.stringify(json));
-        for (var key in json) {
+        for (var key in blips) {
           var blipId = parseInt(key);
           if (blipId > maxBlipId) {
             maxBlipId = blipId;
           }
-          addBlip(json[key]['x'], json[key]['y'], blipId, json[key]['label']);
+          addBlip(blips[key]['x'], blips[key]['y'], blipId, blips[key]['label'], blips[key]['description']);
         }
+        var quadrants = json['quadrants'];
+        $(".detailsTitle").each(function( index ) {
+          if (!canEdit) {
+            $( this ).html(quadrants[index]);
+          }
+          else {
+            $( this ).next().val(quadrants[index]);
+          }
+        });
+
         newBlipId = maxBlipId;
       }
       r.readAsText(f);

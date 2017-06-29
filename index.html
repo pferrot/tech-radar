@@ -12,6 +12,10 @@
 <link rel="stylesheet" type="text/css" href="javascript/jquery-ui-1.12.1.custom/jquery-ui.theme.min.css">
 
 <script src="javascript/konva-1.6.1.min.js"></script>
+
+<script src="javascript/linkifyjs/linkify.min.js"></script>
+<script src="javascript/linkifyjs/linkify-jquery.min.js"></script>
+
 <script src="javascript/tech-radar.js"></script>
 </head>
 
@@ -29,11 +33,11 @@
 <div id="detailsRight"></div>
 </div>
 
-<div id="newBlipDialog" title="Create new blip" style="display: none">
-  <p class="newBlipValidateTips">All form fields are required.</p>
+<div id="newBlipDialog" class="blipForm" title="Create new blip" style="display: none">
+  <p class="newBlipValidateTips"></p>
   <form>
     <fieldset>
-      <label for="newBlipLabel">Label</label>
+      <label for="newBlipLabel">Label*</label>
       <input type="text" name="newBlipLabel" id="newBlipLabel" value="" class="text ui-widget-content ui-corner-all">
       <label for="newBlipDescription">Description</label>
       <textarea rows="15" name="newBlipDescription" id="newBlipDescription" class="text ui-widget-content ui-corner-all"></textarea>
@@ -45,6 +49,21 @@
 
 <div id="viewBlipDialog" title="Blip details" style="display: none">
   <span id="viewBlipDescription"></p>
+</div>
+
+<div id="editBlipDialog" class="blipForm" title="Edit blip" style="display: none">
+  <p class="editBlipValidateTips"></p>
+  <form>
+    <fieldset>
+      <input type="hidden" name="editBlipIdHidden" id="editBlipIdHidden"/>
+      <label for="editBlipLabel">Label*</label>
+      <input type="text" name="editBlipLabel" id="editBlipLabel" value="" class="text ui-widget-content ui-corner-all">
+      <label for="editBlipDescription">Description</label>
+      <textarea rows="15" name="editBlipDescription" id="editBlipDescription" class="text ui-widget-content ui-corner-all"></textarea>
+      <!-- Allow form submission with keyboard without duplicating the dialog button -->
+      <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+    </fieldset>
+  </form>
 </div>
 
 </body>
