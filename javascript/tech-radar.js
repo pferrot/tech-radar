@@ -1,3 +1,6 @@
+var defaultRadarUrl = "radars/lsTechRadar.json";
+var defaultRadarJson = '{"blips":{"1":{"x":399,"y":449,"label":"AWS","shape":"circle"},"2":{"x":294,"y":477,"label":"GCP","shape":"circle"},"3":{"x":500,"y":358,"label":"Grafana","shape":"circle"},"4":{"x":386,"y":364,"label":"Trunk based development","shape":"circle"},"5":{"x":408,"y":319,"label":"dsfvdsf","description":"","shape":"circle"},"6":{"x":326,"y":78,"label":"sdfv","description":"","shape":"circle"},"7":{"x":304,"y":328,"label":"sdfv","description":"","shape":"circle"},"8":{"x":371,"y":114,"label":"sdfvsdv","description":"","shape":"circle"},"9":{"x":326,"y":285,"label":"sdfbsdfb","description":"","shape":"circle"},"10":{"x":299,"y":214,"label":"sdfbsdb","description":"","shape":"circle"},"11":{"x":180,"y":320,"label":"sdfbsdfbsdfb","description":"","shape":"circle"},"12":{"x":164,"y":257,"label":"sdfbsdfbsdfb","description":"","shape":"circle"},"13":{"x":326,"y":184,"label":"sdfbsdfbsdfb","description":"","shape":"circle"},"14":{"x":239,"y":241,"label":"sdfbsdfbdsb","description":"","shape":"circle"},"15":{"x":399,"y":230,"label":"sdbdsfbsdb sd fbsdf bdfsbsdfbsdfb sdfb","description":"","shape":"circle"},"16":{"x":262,"y":184,"label":"sdfbsd b sdfbsd","description":"","shape":"circle"},"17":{"x":286,"y":193,"label":"sdb sdfb","description":"","shape":"circle"},"18":{"x":381,"y":172,"label":"sdf bsdfb","description":"","shape":"circle"},"19":{"x":103,"y":347,"label":"sdf bsdfbsdfbsdf ","description":"","shape":"circle"},"20":{"x":354,"y":240,"label":"s bsdfbsd fbsdf","description":"","shape":"circle"},"21":{"x":193,"y":180,"label":"sd bsdfbsdfb sdfb","description":"","shape":"circle"},"22":{"x":250,"y":324,"label":" sdfbsdfb sdfbsdb","description":"","shape":"circle"},"23":{"x":426,"y":139,"label":"sdfb sdfb","description":"","shape":"circle"},"24":{"x":417,"y":75,"label":"s dfbsdfb","description":"","shape":"circle"},"25":{"x":272,"y":104,"label":"s dfbsdfbsdfb","description":"","shape":"circle"},"26":{"x":314,"y":112,"label":" sdfbsdfbsdfb","description":"","shape":"circle"}},"quadrants":["TechniquesDDD","Platforms","Tools","Languages & Frameworks"]}';
+
 var width = 900;
 var height = 800; //window.innerHeight;
 var blipColorDefault = 'grey';
@@ -31,13 +34,163 @@ var rings = [
 ];
 
 var quadrants = [
-  {name: 'languages_frameworks', blipsColor: 'pink', label: 'Languages & Frameworks', blipsNumberingOrder: 4},
-  {name: 'platforms', blipsColor: 'orange', label: 'Platforms', blipsNumberingOrder: 3},
-  {name: 'techniques', blipsColor: 'blue', label: 'Techniques', blipsNumberingOrder: 1},
-  {name: 'tools', blipsColor: 'green', label: 'Tools', blipsNumberingOrder: 2}
+  {name: 'quadrant4', blipsColor: '#FF69B4', label: 'Quadrant 4', blipsNumberingOrder: 4},
+  {name: 'quadrant3', blipsColor: '#E56717', label: 'Quadrant 3', blipsNumberingOrder: 3},
+  {name: 'quadrant1', blipsColor: '#0041C2', label: 'Quadrant 1', blipsNumberingOrder: 1},
+  {name: 'quadrant2', blipsColor: '#4AA02C', label: 'Quadrant 2', blipsNumberingOrder: 2}
 ];
 
 var detailsDivSuffix = "Details";
+var detailsInternalDivSuffix = "DetailsInternal";
+
+$( document ).ready(function() {
+  stage = new Konva.Stage({
+    container: 'stageContainer',
+    width: width,
+    height: height
+  });
+
+  addQuadrants();
+
+  blipsLayer = new Konva.Layer();
+  blipsDragLayer = new Konva.Layer();
+
+  stage.add(blipsLayer, blipsDragLayer);
+
+  stage.on('dragstart', function(evt) {
+    var shape = evt.target;
+    var arc = getArc(shape);
+    if (arc) {
+      var startDetailsDiv = "details_" + arc.getAttr('quadrantName') + "_" + arc.getAttr('ringName');
+      shape.setAttr("startDetailsDiv", startDetailsDiv);
+      //console.log("Start details div: " + startDetailsDiv);
+    }
+    else {
+      shape.setAttr("startDetailsDiv", undefined);
+      //console.log("Start details div is undefined");
+    }
+
+    // moving to another layer will improve dragging performance
+    shape.moveTo(blipsDragLayer);
+    stage.draw();
+
+    var circle = shape.find(".theShape")[0];
+
+    circle.setAttrs({
+      shadowOffset: {
+        x: blipDragShadowOffsetX,
+        y: blipDragShadowOffsetY
+      },
+      scale: {
+        x: circle.getAttr('startScale') * blipDragScale,
+        y: circle.getAttr('startScale') * blipDragScale
+      }
+    });
+  });
+
+  stage.on('dragend', function(evt) {
+    var shape = evt.target;
+    colorBlipAndSetupDetailsDiv(shape, true);
+  });
+
+  document.getElementById('importRadarFileInputId').addEventListener('change', loadRadar, false);
+
+  for (var j = 0; j < quadrants.length ; j++) {
+    var newDiv = jQuery('<div/>', {
+      id: (quadrants[j].name + detailsDivSuffix),
+      class: 'detailsContainer'
+    });
+    var titleDiv = jQuery('<div/>', {
+      class: 'detailsTitle'
+    });
+    var detailsInternalDiv = jQuery('<div/>', {
+      id: (quadrants[j].name + detailsInternalDivSuffix),
+      class: 'detailsInternal'
+    });
+    titleDiv.html(quadrants[j].label);
+    $(newDiv).append(titleDiv);
+    $(newDiv).append(detailsInternalDiv);
+    $(titleDiv).css('background-color', quadrants[j].blipsColor);
+
+    var currentColor = $(titleDiv).css('background-color');
+    if (currentColor.startsWith('rgb(')) {
+      var newColor = "rgba(" + currentColor.substring(4, currentColor.indexOf(")")) + ", 0.3)"
+      $(titleDiv).css('background-color', newColor);
+    }
+
+    for (var k = 0; k < rings.length; k++) {
+      var ringDiv = jQuery('<div/>', {
+        class: 'detailsRing',
+        id: "details_" + quadrants[j].name + "_" + rings[k].name
+      });
+      var ringTitleDiv = jQuery('<div/>', {
+        class: 'detailsRingTitle'
+      });
+      ringTitleDiv.html(rings[k].label);
+      $(ringDiv).append(ringTitleDiv);
+      $(detailsInternalDiv).append(ringDiv);
+
+      addOrRemoveEmptyDetails(ringDiv);
+    }
+
+    if (j == 0 || j == quadrants.length - 1) {
+      $("#detailsRight").prepend(newDiv);
+    }
+    else {
+      $("#detailsLeft").prepend(newDiv);
+    }
+  }
+
+  initNewBlipDialog();
+  initViewBlipDialog();
+  initEditBlipDialog();
+
+  $("#toggleCanEditButtonId").button({
+    icon: "ui-icon-pencil"
+  });
+  $(".normalButton").button();
+
+  // defaultRadarUrl will not work with local file when not running a local
+  // http server ("Cross origin requests are only supported for protocol schemes: http, data, chrome, chrome-extension, https.")
+  if (defaultRadarJson) {
+    loadRadarFromJson(JSON.parse(defaultRadarJson));
+  }
+  else if (defaultRadarUrl) {
+    $.getJSON(defaultRadarUrl, function(json) {
+      loadRadarFromJson(json);
+    });
+  }
+});
+
+function addEmptyDetails(ringDiv) {
+  var detailsBlipEmptyDiv = jQuery('<div/>', {
+    class: 'detailsBlipEmpty'
+  });
+  detailsBlipEmptyDiv.html("<i>empty</i>");
+  $(ringDiv).append(detailsBlipEmptyDiv);
+}
+
+function removeEmptyDetails(ringDiv) {
+  $(ringDiv).find(".detailsBlipEmpty").remove();
+}
+
+function addOrRemoveEmptyDetails(ringDiv) {
+  var details = $(ringDiv).find(".detailsBlip");
+  if (details.length > 0) {
+    removeEmptyDetails(ringDiv);
+  }
+  else {
+    if ($(ringDiv).find(".detailsBlipEmpty").length == 0) {
+      addEmptyDetails(ringDiv);
+    }
+  }
+}
+
+
+
+function fileUpload() {
+  $( "#importRadarFileInputId" ).click();
+}
 
 function makeBlipsDraggable(theVal) {
   var makeDraggable = undefined;
@@ -79,16 +232,18 @@ function toggleCanEdit() {
   if (!canEdit) {
     $("#addBlipButtonId").show();
     $("#reorderBlipsButtonId").show();
-    $("#exportGraphButtonId").show();
-    $("#importGraphFileInputId").show();
+    $("#exportRadarButtonId").show();
+    $("#importRadarFileInputId").show();
+    $("#fileProxy").show();
     makeBlipsDraggable();
     makeDetailsTitleEditable();
   }
   else {
     $("#addBlipButtonId").hide();
     $("#reorderBlipsButtonId").hide();
-    $("#exportGraphButtonId").hide();
-    $("#importGraphFileInputId").hide();
+    $("#exportRadarButtonId").hide();
+    $("#importRadarFileInputId").hide();
+    $("#fileProxy").hide();
     makeBlipsDraggable(false);
     makeDetailsTitleEditable(false);
   }
@@ -123,96 +278,6 @@ function getQuadrantAndRingNames(theBlip) {
   }
 }
 
-$( document ).ready(function() {
-  stage = new Konva.Stage({
-    container: 'stageContainer',
-    width: width,
-    height: height
-  });
-
-  addQuadrants();
-
-  blipsLayer = new Konva.Layer();
-  blipsDragLayer = new Konva.Layer();
-
-  stage.add(blipsLayer, blipsDragLayer);
-
-  stage.on('dragstart', function(evt) {
-    var shape = evt.target;
-    var arc = getArc(shape);
-    if (arc) {
-      var startDetailsDiv = "details_" + arc.getAttr('quadrantName') + "_" + arc.getAttr('ringName');
-      shape.setAttr("startDetailsDiv", startDetailsDiv);
-      //console.log("Start details div: " + startDetailsDiv);
-    }
-    else {
-      shape.setAttr("startDetailsDiv", undefined);
-      //console.log("Start details div is undefined");
-    }
-
-    // moving to another layer will improve dragging performance
-    shape.moveTo(blipsDragLayer);
-    stage.draw();
-
-    var circle = shape.find("Circle")[0];
-
-    circle.setAttrs({
-      shadowOffset: {
-        x: blipDragShadowOffsetX,
-        y: blipDragShadowOffsetY
-      },
-      scale: {
-        x: circle.getAttr('startScale') * blipDragScale,
-        y: circle.getAttr('startScale') * blipDragScale
-      }
-    });
-  });
-
-  stage.on('dragend', function(evt) {
-    var shape = evt.target;
-    colorBlipAndSetupDetailsDiv(shape, true);
-  });
-
-  document.getElementById('importGraphFileInputId').addEventListener('change', loadGraph, false);
-  //addStars();
-
-  for (var j = 0; j < quadrants.length ; j++) {
-    var newDiv = jQuery('<div/>', {
-      id: (quadrants[j].name + detailsDivSuffix),
-      class: 'detailsContainer'
-    });
-    var titleDiv = jQuery('<div/>', {
-      class: 'detailsTitle'
-    });
-    titleDiv.html(quadrants[j].label);
-    $(newDiv).append(titleDiv);
-
-    for (var k = 0; k < rings.length; k++) {
-      var ringDiv = jQuery('<div/>', {
-        class: 'detailsRing',
-        id: "details_" + quadrants[j].name + "_" + rings[k].name
-      });
-      var ringTitleDiv = jQuery('<div/>', {
-        class: 'detailsRingTitle'
-      });
-      ringTitleDiv.html(rings[k].label);
-      $(ringDiv).append(ringTitleDiv);
-      $(newDiv).append(ringDiv);
-    }
-
-    if (j == 0 || j == quadrants.length - 1) {
-      $("#detailsRight").prepend(newDiv);
-    }
-    else {
-      $("#detailsLeft").prepend(newDiv);
-    }
-  }
-
-  initNewBlipDialog();
-  initViewBlipDialog();
-  initEditBlipDialog();
-});
-
 function getBlipById(blipId) {
  if (stage) {
    return stage.findOne("#blip_" + blipId);
@@ -246,8 +311,11 @@ function getDetailsDivFromBlip(theBlip) {
 
 var detailsDivInAnim = undefined;
 function detailsDivIn() {
+  // Highlight details div.
+  highlightDetails($(this));
+
+  // Effect on blip.
   var blipId = getDetailsDivBlipId(this);
-  //console.log("Details div in: " + blipId);
 
   if (blipId && !detailsDivInAnim) {
     //console.log("Starting details div animation");
@@ -256,14 +324,16 @@ function detailsDivIn() {
     var period = 1500;
     detailsDivInAnim = new Konva.Animation(function(frame) {
         var scale = Math.sin(frame.time * 2 * Math.PI / period) + 1.5;
-        theBlip.find("Circle")[0].scale({ x : scale, y : scale });
+        theBlip.find(".theShape")[0].scale({ x : scale, y : scale });
     }, blipsLayer);
     detailsDivInAnim.start();
   }
 }
 
 function detailsDivOut() {
-  //console.log("Details div out: " + getDetailsDivBlipId(this));
+  // Stop highlight details div.
+  unhighlightDetails($(this));
+
   if (detailsDivInAnim) {
     //console.log("Stopping details div animation");
     detailsDivInAnim.stop();
@@ -271,12 +341,12 @@ function detailsDivOut() {
     var blipId = getDetailsDivBlipId(this);
     //console.log("blipId: " + blipId);
     //console.log("blip: " + getBlipById(blipId));
-    var theCircle = getBlipById(blipId).find("Circle")[0];
-    theCircle.to({
+    var theShape = getBlipById(blipId).find(".theShape")[0];
+    theShape.to({
       duration: 0.5,
       easing: Konva.Easings.ElasticEaseOut,
-      scaleX: theCircle.getAttr('startScale'),
-      scaleY: theCircle.getAttr('startScale'),
+      scaleX: theShape.getAttr('startScale'),
+      scaleY: theShape.getAttr('startScale'),
       shadowOffsetX: 5,
       shadowOffsetY: 5
     });
@@ -293,18 +363,18 @@ function getBlipId(theBlip) {
   }
 }
 
-function colorBlipAndSetupDetailsDiv(theBlip, withEffect) {
+function colorBlipAndSetupDetailsDiv(theBlip, withEffect, doNoUpdateDetailsDiv) {
   // Color blip.
-  var circle = theBlip.find("Circle")[0];
+  var theShape = theBlip.find(".theShape")[0];
   //var pos = stage.getPointerPosition();
   var arc = getArc(theBlip);
   if (arc) {
-    circle.fill(arc.getAttr('blipsColor'));
+    theShape.fill(arc.getAttr('blipsColor'));
     var endDetailsDiv = "details_" + arc.getAttr('quadrantName') + "_" + arc.getAttr('ringName');
     //console.log("End details div: " + endDetailsDiv);
   }
   else {
-    circle.fill(blipColorDefault);
+    theShape.fill(blipColorDefault);
     var endDetailsDiv = undefined;
     //console.log("End details div: " + endDetailsDiv);
   }
@@ -312,76 +382,78 @@ function colorBlipAndSetupDetailsDiv(theBlip, withEffect) {
   theBlip.moveTo(blipsLayer);
   stage.draw();
   if (withEffect) {
-    circle.to({
+    theShape.to({
       duration: 0.5,
       easing: Konva.Easings.ElasticEaseOut,
-      scaleX: circle.getAttr('startScale'),
-      scaleY: circle.getAttr('startScale'),
+      scaleX: theShape.getAttr('startScale'),
+      scaleY: theShape.getAttr('startScale'),
       shadowOffsetX: blipShadowOffsetX,
       shadowOffsetY: blipShadowOffsetY
     });
   }
 
-  // Setup details div.
-  var startDetailsDiv = theBlip.getAttr("startDetailsDiv");
+  if (!doNoUpdateDetailsDiv) {
+    // Setup details div.
+    var startDetailsDiv = theBlip.getAttr("startDetailsDiv");
 
-  //console.log("Adding details for " + getBlipId(theBlip));
+    //console.log("Adding details for " + getBlipId(theBlip));
 
-  // We need to update the details.
-  if (endDetailsDiv != startDetailsDiv) {
-    var blipId = theBlip.find("Text")[0].getAttr("text");
-    var blipIdInt = parseInt(blipId);
-    var blipLabel = theBlip.find("Text")[0].getAttr("label");
-    //console.log("Blip ID: " + blipId);
-    // Remove from start.
-    if (startDetailsDiv) {
-      //console.log("Removing: " + "#blipDetails_" + blipId);
-      $("#" + startDetailsDiv).find("#blipDetails_" + blipId).remove();
-    }
-    // Add to target.
-    if (endDetailsDiv) {
-      var newBlipDetailsDiv = jQuery('<div/>', {
-        class: 'detailsBlip',
-        id: "blipDetails_" + blipId
-      });
-      newBlipDetailsDiv.hover(detailsDivIn, detailsDivOut);
-      newBlipDetailsDiv.click(function() {
-        if (!canEdit) {
-          openViewBlipDialog(blipId);
+    // We need to update the details.
+    if (endDetailsDiv != startDetailsDiv) {
+      var blipId = theBlip.find("Text")[0].getAttr("text");
+      var blipIdInt = parseInt(blipId);
+      var blipLabel = theBlip.find("Text")[0].getAttr("label");
+      //console.log("Blip ID: " + blipId);
+      // Remove from start.
+      if (startDetailsDiv) {
+        //console.log("Removing: " + "#blipDetails_" + blipId);
+        $("#" + startDetailsDiv).find("#blipDetails_" + blipId).remove();
+        addOrRemoveEmptyDetails($("#" + startDetailsDiv));
+      }
+      // Add to target.
+      if (endDetailsDiv) {
+        var newBlipDetailsDiv = jQuery('<div/>', {
+          class: 'detailsBlip',
+          id: "blipDetails_" + blipId
+        });
+        newBlipDetailsDiv.hover(detailsDivIn, detailsDivOut);
+        newBlipDetailsDiv.click(function() {
+          if (!canEdit) {
+            openViewBlipDialog(blipId);
+          }
+          else {
+            openEditBlipDialog(blipId);
+          }
+        });
+        // Keep blips in ascending order (ID based).
+        var followingBlipId = undefined;
+        $("#" + endDetailsDiv).find(".detailsBlip").each(function() {
+          var elemId = $( this ).attr('id');
+          //console.log("ElemID: " + elemId);
+          var currentBlipId = parseInt(getDetailsDivBlipId(this));
+          //console.log("Current ID: " + currentBlipId);
+          if (currentBlipId > blipIdInt && (!followingBlipId || currentBlipId < followingBlipId))   {
+            followingBlipId = currentBlipId;
+          }
+        });
+        if (followingBlipId) {
+          //console.log("Found following: " + followingBlipId);
+          $("#blipDetails_" + followingBlipId).before(newBlipDetailsDiv);
         }
         else {
-          openEditBlipDialog(blipId);
+          //console.log("No following found");
+          $("#" + endDetailsDiv).append(newBlipDetailsDiv);
         }
-      });
-      // Keep blips in ascending order (ID based).
-      var followingBlipId = undefined;
-      $("#" + endDetailsDiv).find(".detailsBlip").each(function() {
-        var elemId = $( this ).attr('id');
-        //console.log("ElemID: " + elemId);
-        var currentBlipId = parseInt(getDetailsDivBlipId(this));
-        //console.log("Current ID: " + currentBlipId);
-        if (currentBlipId > blipIdInt && (!followingBlipId || currentBlipId < followingBlipId))   {
-          followingBlipId = currentBlipId;
-        }
-      });
-      if (followingBlipId) {
-        //console.log("Found following: " + followingBlipId);
-        $("#blipDetails_" + followingBlipId).before(newBlipDetailsDiv);
+        addOrRemoveEmptyDetails($("#" + endDetailsDiv));
+        // Need to update the label *after* the div has been added to the DOM since we
+        // search it by ID in 'updateBlipLabel'.
+        updateBlipLabel(blipId, blipLabel);
       }
-      else {
-        //console.log("No following found");
-        $("#" + endDetailsDiv).append(newBlipDetailsDiv);
-      }
-      // Need to update the label *after* the div has been added to the DOM since we
-      // search it by ID in 'updateBlipLabel'.
-      updateBlipLabel(blipId, blipLabel);
     }
   }
 }
 
 function getArc(shape) {
-  //console.log("Circle pos: " + shape.getAttr('x') + ", " + shape.getAttr('y'));
-  //console.log("Circle offset: " + shape.getAttr('offsetX') + ", " + shape.getAttr('offsetY'));
   return arcsLayer.getIntersection({x: shape.getAttr('x'), y: shape.getAttr('y')});
 }
 
@@ -395,11 +467,15 @@ function addQuadrants() {
         innerRadius += rings[k].width;
       }
       addQuadrant(arcsLayer, innerRadius, innerRadius + rings[i].width, 90, j * (360 / quadrants.length), rings[i].color, rings[i].name, quadrants[j].name, quadrants[j].blipsColor);
+      if (j == rings.length - 1) {
+        addRingLabel(rings[i].label, 0, -innerRadius - rings[i].width, arcsLayer);
+      }
     }
   }
 
   stage.add(arcsLayer);
 
+  /*
   var quadrantsLabelsLayer = new Konva.Layer();
   var radarRadius = getRadarRadius();
 
@@ -407,7 +483,7 @@ function addQuadrants() {
     addQuadrantLabel(quadrants[j].label, radarRadius, j, 20, quadrantsLabelsLayer);
   }
   stage.add(quadrantsLabelsLayer);
-
+  */
 }
 
 function getRadarRadius() {
@@ -418,6 +494,29 @@ function getRadarRadius() {
   return r;
 }
 
+function addRingLabel(label, offsetX, offsetY, layer) {
+  var x = (stage.getWidth() / 2) + offsetX;
+  var y = (stage.getHeight() / 2) + offsetY;
+  var text = new Konva.Text({
+    x: x,
+    y: y,
+    text: label,
+    fontSize: 12,
+    fontFamily: 'Lato',
+    fill: 'black'
+  });
+
+  var rect = text.getClientRect();
+  text.setAttrs({
+    //x: x - (rect.width / 2),
+    x: x  + 5,
+    y: y + 10
+  });
+  layer.add(text);
+  text.setZIndex(9999);
+}
+
+// @Deprecated
 function addQuadrantLabel(label, outerRingRadius, quadrantIndex, offset, layer) {
   var twoPi = Math.PI * 2;
   var oneQuadrantAngle = (twoPi / quadrants.length);
@@ -445,7 +544,7 @@ function addQuadrantLabel(label, outerRingRadius, quadrantIndex, offset, layer) 
     y: y,
     text: label,
     fontSize: 30,
-    fontFamily: 'Calibri',
+    fontFamily: 'Lato',
     fill: 'black'
   });
 
@@ -492,17 +591,25 @@ function getNewBlipId() {
   return ++newBlipId;
 }
 
-function highlightDetails(theBlip) {
-  var theDiv = getDetailsDivFromBlip(theBlip);
+function highlightDetailsFromBlip(theBlip) {
+  highlightDetails(getDetailsDivFromBlip(theBlip));
+}
+
+function highlightDetails(theDiv) {
   if (theDiv) {
-    theDiv.addClass("highlightedDetails");
+    // Use the same color and alpha as the one that were set on tht title.
+    var detailsTitleDiv = theDiv.parent().parent().parent().find(".detailsTitle");
+    theDiv.css('background-color', detailsTitleDiv.css('background-color'));
   }
 }
 
-function unhighlightDetails(theBlip) {
-  var theDiv = getDetailsDivFromBlip(theBlip);
+function unhighlightDetailsFromBlip(theBlip) {
+  unhighlightDetails(getDetailsDivFromBlip(theBlip));
+}
+
+function unhighlightDetails(theDiv) {
   if (theDiv) {
-    theDiv.removeClass("highlightedDetails");
+    theDiv.css('background-color', 'rgba(0, 0, 0, 0)');
   }
 }
 
@@ -540,7 +647,7 @@ function initNewBlipDialog() {
         width: 500,
         modal: true,
         buttons: {
-          "Create new blip": addNewBlip,
+          "Save": addNewBlip,
           Cancel: function() {
             newBlipDialog.dialog( "close" );
           }
@@ -599,7 +706,7 @@ function initEditBlipDialog() {
 function openEditBlipDialog(theBlipId) {
   $("#editBlipIdHidden").val(theBlipId);
   var theBlip = getBlipById(theBlipId);
-  var c = theBlip.find('Circle')[0];
+  var c = theBlip.find('.theShape')[0];
   var t = theBlip.find('Text')[0];
   //var blipId = t.getAttr('text');
   var blipLabel = t.getAttr('label');
@@ -616,6 +723,8 @@ function openEditBlipDialog(theBlipId) {
   else {
     $("#editBlipDescription").val("");
   }
+  var theShape = c.getAttr('shapeType');
+  $('input[type=radio][name=editBlipShape][value=' + theShape + ']').attr('checked', true);
   editBlipDialog.dialog( "open" );
 }
 
@@ -637,7 +746,6 @@ function initViewBlipDialog() {
 
 function openViewBlipDialog(theBlipId) {
   var theBlip = getBlipById(theBlipId);
-  var c = theBlip.find('Circle')[0];
   var t = theBlip.find('Text')[0];
   //var blipId = t.getAttr('text');
   var blipLabel = t.getAttr('label');
@@ -661,6 +769,7 @@ function openViewBlipDialog(theBlipId) {
 function addNewBlip() {
   var newBlipLabel = $( "#newBlipLabel" );
   var newBlipDescription = $( "#newBlipDescription" );
+  var newBlipShapeValue = $('input[type=radio][name=newBlipShape]:checked').val();
   var allFields = $( [] ).add( newBlipLabel ).add( newBlipDescription );
 
   var valid = true;
@@ -673,8 +782,9 @@ function addNewBlip() {
     var result = {};
     result.label = newBlipLabel.val();
     result.description = newBlipDescription.val();
+    result.shape = newBlipShapeValue;
     newBlipDialog.dialog( "close" );
-    addBlip(50, 50, getNewBlipId().toString(), result.label, result.description);
+    addBlip(50, 50, getNewBlipId().toString(), result.label, result.description, result.shape);
   }
   return valid;
 }
@@ -682,6 +792,7 @@ function addNewBlip() {
 function editBlip() {
   var editBlipLabel = $( "#editBlipLabel" );
   var editBlipDescription = $( "#editBlipDescription" );
+  var editBlipShapeValue = $('input[type=radio][name=editBlipShape]:checked').val();
   var allFields = $( [] ).add( editBlipLabel ).add( editBlipDescription );
 
   var valid = true;
@@ -697,6 +808,7 @@ function editBlip() {
     editBlipDialog.dialog( "close" );
     updateBlipLabel( $( "#editBlipIdHidden" ).val(), result.label);
     updateBlipDescription( $( "#editBlipIdHidden" ).val(), result.description);
+    updateBlipShape($( "#editBlipIdHidden" ).val(), editBlipShapeValue);
   }
   return valid;
 }
@@ -710,7 +822,82 @@ function updateBlipDescription(theBlipId, theDescription) {
   getBlipById(theBlipId).find("Text")[0].setAttr("description", theDescription);
 }
 
-function addBlip(thePosX, thePosY, theBlipId, theLabel) {
+function updateBlipShape(theBlipId, theNewShapeType) {
+  var theBlip = getBlipById(theBlipId);
+  var theShape = theBlip.find(".theShape")[0];
+  if (theShape.getAttr("shapeType") != theNewShapeType) {
+    var newShape = getNewShape(theNewShapeType);
+    theShape.destroy();
+    theBlip.add(newShape);
+    // Make sure text is still above the shape itself.
+    newShape.setZIndex(1);
+    theBlip.find("Text")[0].setZIndex(10);
+    colorBlipAndSetupDetailsDiv(theBlip, false, true);
+    //stage.draw();
+  }
+}
+function getNewShape(theShapeType) {
+  var scale = 1;
+  if (theShapeType == 'circle') {
+    var newShape = new Konva.Circle({
+      radius: 12,
+      fill: blipColorDefault,
+      stroke: 'black',
+      strokeWidth: 1,
+      // the group is draggable
+      //draggable: true,
+      shadowEnabled: blipShadowEnabled,
+      shadowColor: 'black',
+      shadowBlur: 2,
+      shadowOffset: {
+        x : blipShadowOffsetX,
+        y : blipShadowOffsetY
+      },
+      shadowOpacity: 0.2,
+      scale: scale,
+      // custom attribute
+      startScale: scale,
+      name: "theShape",
+      shapeType: theShapeType
+    });
+  }
+  else if (theShapeType == 'triangle') {
+    var newShape = new Konva.Shape({
+      sceneFunc: function(context) {
+        context.beginPath();
+        context.moveTo(13, 0);
+        context.lineTo(26, 26);
+        context.lineTo(0, 26);
+        context.closePath();
+        // Konva specific method
+        context.fillStrokeShape(this);
+      },
+      offsetX: 13,
+      offsetY: 15,
+      fill: blipColorDefault,
+      stroke: 'black',
+      strokeWidth: 1,
+      // the group is draggable
+      //draggable: true,
+      shadowEnabled: blipShadowEnabled,
+      shadowColor: 'black',
+      shadowBlur: 2,
+      shadowOffset: {
+        x : blipShadowOffsetX,
+        y : blipShadowOffsetY
+      },
+      shadowOpacity: 0.2,
+      scale: scale,
+      // custom attribute
+      startScale: scale,
+      name: "theShape",
+      shapeType: theShapeType
+    });
+  }
+
+  return newShape;
+}
+function addBlip(thePosX, thePosY, theBlipId, theLabel, theDescription, theShape) {
   //console.log("Adding blip ID " + blipId + " (" + x + ", " + y + ")");
   var group = new Konva.Group({
     id: "blip_" + theBlipId,
@@ -721,38 +908,19 @@ function addBlip(thePosX, thePosY, theBlipId, theLabel) {
     draggable: true
   });
 
-  var scale = 1;
-  // create circle
-  var circle = new Konva.Circle({
-    radius: 12,
-    fill: blipColorDefault,
-    stroke: 'black',
-    strokeWidth: 1,
-    // the group is draggable
-    //draggable: true,
-    shadowEnabled: blipShadowEnabled,
-    shadowColor: 'black',
-    shadowBlur: 2,
-    shadowOffset: {
-      x : blipShadowOffsetX,
-      y : blipShadowOffsetY
-    },
-    shadowOpacity: 0.2,
-    scale: scale,
-    // custom attribute
-    startScale: scale
-  });
+
+  var innerShape = getNewShape(theShape);
 
   group.on('mouseenter', function () {
       if (canEdit) {
         stage.container().style.cursor = 'move'; // 'default', 'pointer', 'move', 'crosshair'
       }
-      highlightDetails(this);
+      highlightDetailsFromBlip(this);
   });
 
   group.on('mouseleave', function () {
       stage.container().style.cursor = 'default';
-      unhighlightDetails(this);
+      unhighlightDetailsFromBlip(this);
   });
 
   group.on('click', function() {
@@ -773,9 +941,10 @@ function addBlip(thePosX, thePosY, theBlipId, theLabel) {
   var text = new Konva.Text({
     text: theBlipId,
     fontSize: 12,
-    fontFamily: 'Calibri',
+    fontFamily: 'Lato',
     fill: 'white',
-    label: theLabel
+    label: theLabel,
+    description: theDescription
   });
 
   var textClientRect = text.getClientRect();
@@ -784,7 +953,7 @@ function addBlip(thePosX, thePosY, theBlipId, theLabel) {
     y: - textClientRect.height / 2
   });
 
-  group.add(circle);
+  group.add(innerShape);
   group.add(text);
   blipsLayer.add(group);
 
@@ -804,49 +973,10 @@ function clearBlips() {
       blipGroups[i].destroy();
     }
     $(".detailsBlip").remove();
-  }
-}
-
-function addStars() {
-  var layer = new Konva.Layer();
-  var dragLayer = new Konva.Layer();
-
-  for(var n = 0; n < 30; n++) {
-    addStar(layer, stage);
-  }
-
-  stage.add(layer, dragLayer);
-
-  stage.on('dragstart', function(evt) {
-    var shape = evt.target;
-    // moving to another layer will improve dragging performance
-    shape.moveTo(dragLayer);
-    stage.draw();
-    shape.setAttrs({
-      shadowOffset: {
-        x: 15,
-        y: 15
-      },
-      scale: {
-        x: shape.getAttr('startScale') * 1.2,
-        y: shape.getAttr('startScale') * 1.2
-      }
+    $(".detailsRing").each(function( index ) {
+      addOrRemoveEmptyDetails($(this));
     });
-  });
-
-  stage.on('dragend', function(evt) {
-    var shape = evt.target;
-    shape.moveTo(layer);
-    stage.draw();
-    shape.to({
-      duration: 0.5,
-      easing: Konva.Easings.ElasticEaseOut,
-      scaleX: shape.getAttr('startScale'),
-      scaleY: shape.getAttr('startScale'),
-      shadowOffsetX: 5,
-      shadowOffsetY: 5
-    });
-  });
+  }
 }
 
 function addQuadrant(layer, innerRadius, outerRadius, angle, rotation, fill, ringName, quadrantName, blipsColor) {
@@ -901,7 +1031,7 @@ function addStar(layer, stage) {
   layer.add(star);
 }
 
-function exportGraph() {
+function exportRadar() {
   if (blipsLayer) {
     var result = {};
     var blips = {};
@@ -910,13 +1040,10 @@ function exportGraph() {
       var g = blipGroups[i];
       var x = g.getAttr('x');
       var y = g.getAttr('y');
-      var c = g.find('Circle')[0];
+      var c = g.find('.theShape')[0];
       var t = g.find('Text')[0];
       var blipId = t.getAttr('text');
-      blips[blipId] = {'x': x, 'y': y, 'label': t.getAttr('label'), 'description': t.getAttr('description')};
-      //console.log("" + label + ": (" + x + ", " + y + ")");
-      //console.log("Circle: (" + c.getAttr('x') + ", " + c.getAttr('y') + ")");
-      //console.log("Text: (" + t.getAttr('x') + ", " + t.getAttr('y') + ")");
+      blips[blipId] = {'x': x, 'y': y, 'label': t.getAttr('label'), 'description': t.getAttr('description'), 'shape': c.getAttr('shapeType')};
     }
     result['blips'] = blips;
     var quadrants = [];
@@ -933,48 +1060,51 @@ function exportGraph() {
     result['quadrants'] = quadrants;
     var stringifyResult = JSON.stringify(result);
     var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(stringifyResult);
-    var exportGraphAnchorElem = document.getElementById('exportGraphAnchorElem');
-    exportGraphAnchorElem.setAttribute("href", dataStr);
-    exportGraphAnchorElem.setAttribute("download", "lsTechRadar.json");
-    exportGraphAnchorElem.click();
+    var exportRadarAnchorElem = document.getElementById('exportRadarAnchorElem');
+    exportRadarAnchorElem.setAttribute("href", dataStr);
+    exportRadarAnchorElem.setAttribute("download", "lsTechRadar.json");
+    exportRadarAnchorElem.click();
   }
 }
 
-function loadGraph(evt) {
+function loadRadarFromJson(json) {
+  var maxBlipId = 0;
+  clearBlips();
+  var blips = json['blips'];
+  //console.log("JSON: " + JSON.stringify(json));
+  for (var key in blips) {
+    var blipId = parseInt(key);
+    if (blipId > maxBlipId) {
+      maxBlipId = blipId;
+    }
+    addBlip(blips[key]['x'], blips[key]['y'], blipId, blips[key]['label'], blips[key]['description'], blips[key]['shape']);
+  }
+  var quadrants = json['quadrants'];
+  $(".detailsTitle").each(function( index ) {
+    if (!canEdit) {
+      $( this ).html(quadrants[index]);
+    }
+    else {
+      $( this ).next().val(quadrants[index]);
+    }
+  });
+
+  newBlipId = maxBlipId;
+}
+function loadRadar(evt) {
   if (window.File && window.FileReader && window.FileList && window.Blob) {
     var files = evt.target.files; // FileList object
     //Retrieve the first (and only!) File from the FileList object
     var f = evt.target.files[0];
 
     if (f) {
-      var maxBlipId = 0;
       var r = new FileReader();
       r.onload = function(e) {
-        clearBlips();
-	      var content = e.target.result;
+        var content = e.target.result;
         //console.log("Got the file name " + f.name + ", size: " + f.size + " bytes")
         //console.log(contents);
         var json = JSON.parse(content);
-        var blips = json['blips'];
-        //console.log("JSON: " + JSON.stringify(json));
-        for (var key in blips) {
-          var blipId = parseInt(key);
-          if (blipId > maxBlipId) {
-            maxBlipId = blipId;
-          }
-          addBlip(blips[key]['x'], blips[key]['y'], blipId, blips[key]['label'], blips[key]['description']);
-        }
-        var quadrants = json['quadrants'];
-        $(".detailsTitle").each(function( index ) {
-          if (!canEdit) {
-            $( this ).html(quadrants[index]);
-          }
-          else {
-            $( this ).next().val(quadrants[index]);
-          }
-        });
-
-        newBlipId = maxBlipId;
+        loadRadarFromJson(json);
       }
       r.readAsText(f);
     }

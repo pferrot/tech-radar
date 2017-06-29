@@ -20,12 +20,17 @@
 </head>
 
 <body>
-<button id="addBlipButtonId" type="button" onclick="openAddNewBlipDialog();" style="display: none;">Add blip</button>
-<button id="reorderBlipsButtonId" type="button" onclick="reorderBlips();" style="display: none;">Reorder blips</button>
-<button id="exportGraphButtonId" type="button" onclick="exportGraph();" style="display: none;">Export graph</button>
-<input id="importGraphFileInputId" type="file" accept=".json" style="display: none;"/>
-<a id="exportGraphAnchorElem" style="display:none"></a>
-<button id="toggleCanEditButtonIt" type="button" onclick="toggleCanEdit();">Toggle edit mode</button>
+<div id="buttonsDiv">
+<button id="toggleCanEditButtonId" type="button" onclick="toggleCanEdit();"></button>
+<button id="addBlipButtonId" class="normalButton" type="button" onclick="openAddNewBlipDialog();" style="display: none;">Add blip...</button>
+<button id="reorderBlipsButtonId" class="normalButton" type="button" onclick="reorderBlips();" style="display: none;">Reorder blips</button>
+<button id="exportRadarButtonId" class="normalButton" type="button" onclick="exportRadar();" style="display: none;">Export radar...</button>
+<button id="fileProxy" type="button" class="normalButton" onclick="fileUpload();" style="display: none;">Import radar...</button>
+<div style="display: none;">
+<input id="importRadarFileInputId" type="file" accept=".json" style="display: none;"/>
+</div>
+<a id="exportRadarAnchorElem" style="display:none"></a>
+</div>
 
 <div id="mainContainer">
 <div id="detailsLeft"></div>
@@ -41,6 +46,9 @@
       <input type="text" name="newBlipLabel" id="newBlipLabel" value="" class="text ui-widget-content ui-corner-all">
       <label for="newBlipDescription">Description</label>
       <textarea rows="15" name="newBlipDescription" id="newBlipDescription" class="text ui-widget-content ui-corner-all"></textarea>
+      <label for="newBlipShape">Shape*</label>
+      <input type="radio" name="newBlipShape" value="circle" checked> Circle (for items that have not changed)<br>
+      <input type="radio" name="newBlipShape" value="triangle"> Triangle (for new items)
       <!-- Allow form submission with keyboard without duplicating the dialog button -->
       <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
     </fieldset>
@@ -60,6 +68,9 @@
       <input type="text" name="editBlipLabel" id="editBlipLabel" value="" class="text ui-widget-content ui-corner-all">
       <label for="editBlipDescription">Description</label>
       <textarea rows="15" name="editBlipDescription" id="editBlipDescription" class="text ui-widget-content ui-corner-all"></textarea>
+      <label for="editBlipShape">Shape*</label>
+      <input type="radio" name="editBlipShape" id="editBlipShape" value="circle"> Circle (for items that have not changed)<br>
+      <input type="radio" name="editBlipShape" id="editBlipShape" value="triangle"> Triangle (for new items)
       <!-- Allow form submission with keyboard without duplicating the dialog button -->
       <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
     </fieldset>

@@ -1,9 +1,17 @@
+html {
+    font-size: 12px;
+    font-family: 'Lato', sans-serif;
+}
+
 body {
   margin: 0;
   padding: 0;
   overflow: hidden;
   background-color: #F0F0F0;
-  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
+
+#buttonsDiv {
+  margin: 5px;
 }
 
 #mainContainer {
@@ -22,14 +30,27 @@ body {
 
 .detailsTitle {
   font-size: 20px;
+  font-weight: bold;
+  padding-bottom: 2px;
+}
+
+.detailsInternal {
+  height: 360px;
+  overflow-y: scroll;
 }
 
 .detailsRingTitle {
   font-size: 16px;
+  font-weight: bold;
+  padding-top: 3px;
 }
 
 .detailsBlip {
   font-size: 12px;
+}
+
+.highlightedDetails {
+  background-color: yellow;
 }
 
 #detailsLeft {
@@ -40,11 +61,8 @@ body {
   width: 250px;
 }
 
-.highlightedDetails {
-  background-color: yellow;
-}
-
 div.blipForm label, div.blipForm input { display:block; }
+div.blipForm input[type=radio] { display:inline; }
 div.blipForm input.text { margin-bottom:12px; width:95%; padding: .4em; }
 div.blipForm textarea { margin-bottom:12px; width:95%; padding: .4em; }
 div.blipForm fieldset { padding:0; border:0; margin-top:25px; }

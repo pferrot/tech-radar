@@ -1,0 +1,1 @@
+{"blips":{"1":{"x":399,"y":449,"label":"AWS","shape":"circle"},"2":{"x":294,"y":477,"label":"GCP","shape":"circle"},"3":{"x":500,"y":358,"label":"Grafana","shape":"circle"},"4":{"x":386,"y":364,"label":"Trunk based development","shape":"circle"}},"quadrants":["TechniquesDDD","Platforms","Tools","Languages & Frameworks"]}
