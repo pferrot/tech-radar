@@ -1230,7 +1230,15 @@ function updateBlipId(theBlip, newId, makeTemp) {
   var oldId = getBlipId(theBlip);
   //console.log("Changing blip ID: " + oldId + " --> " + newId + suffix);
   theBlip.setAttr("id", "blip_" + newId + suffix);
-  theBlip.find("Text")[0].setAttr("text", "" + newId);
+  var text = theBlip.find("Text")[0];
+  text.setAttr("text", "" + newId);
+  // Center ID in case it changed for a 1 digit number to a 2 letters digit.
+  var textClientRect = text.getClientRect();
+  text.setAttrs({
+    x: - textClientRect.width / 2,
+    y: - textClientRect.height / 2
+  });
+  
   if (!makeTemp) {
     $("#blipDetails_" + oldId).remove();
     colorBlipAndSetupDetailsDiv(theBlip);
