@@ -140,7 +140,7 @@ $( document ).ready(function() {
       id: (quadrants[j].name + detailsInternalDivSuffix),
       class: 'detailsInternal'
     });
-    titleDiv.html(quadrants[j].label);
+    titleDiv.text(quadrants[j].label);
     $(newDiv).append(titleDiv);
     $(newDiv).append(detailsInternalDiv);
     $(titleDiv).css('background-color', quadrants[j].blipsColor);
@@ -159,7 +159,7 @@ $( document ).ready(function() {
       var ringTitleDiv = jQuery('<div/>', {
         class: 'detailsRingTitle'
       });
-      ringTitleDiv.html(rings[k].label);
+      ringTitleDiv.text(rings[k].label);
       $(ringDiv).append(ringTitleDiv);
       $(detailsInternalDiv).append(ringDiv);
 
@@ -253,7 +253,7 @@ function makeDetailsTitleEditable(theVal) {
       $( this ).after($('<input/>').attr({ type: 'text', class: 'detailsTitleInput', value: $(this).text()}));
     }
     else {
-      $( this ).html($( this ).next().val());
+      $( this ).text($( this ).next().val());
       $( this ).next().remove();
       $( this ).show();
     }
@@ -274,7 +274,7 @@ function makeMainTitleEditable(theVal) {
       $( this ).after($('<input/>').attr({ type: 'text', class: 'mainTitleInput', value: $(this).text()}));
     }
     else {
-      $( this ).html($( this ).next().val());
+      $( this ).text($( this ).next().val());
       $( this ).next().remove();
       $( this ).show();
     }
@@ -739,7 +739,7 @@ function initNewBlipDialog() {
         close: function() {
           newBlipForm[ 0 ].reset();
           allFields.removeClass( "ui-state-error" );
-          tips.html("");
+          tips.text("");
         }
       });
 
@@ -776,7 +776,7 @@ function initEditBlipDialog() {
         close: function() {
           editBlipForm[ 0 ].reset();
           allFields.removeClass( "ui-state-error" );
-          tips.html("");
+          tips.text("");
         }
       });
 
@@ -898,7 +898,7 @@ function editBlip() {
 }
 
 function updateBlipLabel(theBlipId, theLabel) {
-  $("#blipDetails_" + theBlipId).html(theBlipId + ". " + theLabel);
+  $("#blipDetails_" + theBlipId).text(theBlipId + ". " + theLabel);
   getBlipById(theBlipId).find("Text")[0].setAttr("label", theLabel);
 }
 
@@ -1238,7 +1238,7 @@ function updateBlipId(theBlip, newId, makeTemp) {
     x: - textClientRect.width / 2,
     y: - textClientRect.height / 2
   });
-  
+
   if (!makeTemp) {
     $("#blipDetails_" + oldId).remove();
     colorBlipAndSetupDetailsDiv(theBlip);
