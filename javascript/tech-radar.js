@@ -989,7 +989,7 @@ function addBlip(thePosX, thePosY, theBlipId, theLabel, theDescription, theShape
     // starting pos
     x: thePosX,
     y: thePosY,
-    draggable: true
+    draggable: canEdit
   });
 
 
