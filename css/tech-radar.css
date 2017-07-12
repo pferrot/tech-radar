@@ -6,7 +6,6 @@ html {
 body {
   margin: 0;
   padding: 0;
-  overflow: hidden;
   background-color: #F0F0F0;
 }
 
@@ -31,7 +30,7 @@ body {
 }
 
 #mainContainer {
-  align-items: center;
+  /*align-items: center;*/
   display: flex;
   justify-content: center;
   margin-top: 30px;
@@ -41,7 +40,7 @@ body {
 }
 
 .detailsContainer {
-  height: 400px;
+  /*height: 400px;*/
 }
 
 .detailsTitle {
@@ -51,7 +50,7 @@ body {
 }
 
 .detailsInternal {
-  height: 360px;
+  /*height: 360px;*/
   overflow-y: scroll;
 }
 

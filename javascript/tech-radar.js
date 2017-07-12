@@ -1,5 +1,5 @@
 var defaultRadarUrl = "radars/lsTechRadar.json";
-var defaultRadarJson = '{"mainTitle": "Test radar","blips":{"1":{"x":399,"y":449,"label":"AWS","shape":"circle"},"2":{"x":294,"y":477,"label":"GCP","shape":"circle"},"3":{"x":500,"y":358,"label":"Grafana","shape":"circle"},"4":{"x":386,"y":364,"label":"Trunk based development","shape":"circle"},"5":{"x":408,"y":319,"label":"dsfvdsf","description":"","shape":"circle"},"6":{"x":326,"y":78,"label":"sdfv","description":"","shape":"circle"},"7":{"x":304,"y":328,"label":"sdfv","description":"","shape":"circle"},"8":{"x":371,"y":114,"label":"sdfvsdv","description":"","shape":"circle"},"9":{"x":326,"y":285,"label":"sdfbsdfb","description":"","shape":"circle"},"10":{"x":299,"y":214,"label":"sdfbsdb","description":"","shape":"circle"},"11":{"x":180,"y":320,"label":"sdfbsdfbsdfb","description":"","shape":"circle"},"12":{"x":164,"y":257,"label":"sdfbsdfbsdfb","description":"","shape":"circle"},"13":{"x":326,"y":184,"label":"sdfbsdfbsdfb","description":"","shape":"circle"},"14":{"x":239,"y":241,"label":"sdfbsdfbdsb","description":"","shape":"circle"},"15":{"x":399,"y":230,"label":"sdbdsfbsdb sd fbsdf bdfsbsdfbsdfb sdfb","description":"","shape":"circle"},"16":{"x":262,"y":184,"label":"sdfbsd b sdfbsd","description":"","shape":"circle"},"17":{"x":286,"y":193,"label":"sdb sdfb","description":"","shape":"circle"},"18":{"x":381,"y":172,"label":"sdf bsdfb","description":"","shape":"circle"},"19":{"x":103,"y":347,"label":"sdf bsdfbsdfbsdf ","description":"","shape":"circle"},"20":{"x":354,"y":240,"label":"s bsdfbsd fbsdf","description":"","shape":"circle"},"21":{"x":193,"y":180,"label":"sd bsdfbsdfb sdfb","description":"","shape":"circle"},"22":{"x":250,"y":324,"label":" sdfbsdfb sdfbsdb","description":"","shape":"circle"},"23":{"x":426,"y":139,"label":"sdfb sdfb","description":"","shape":"circle"},"24":{"x":417,"y":75,"label":"s dfbsdfb","description":"","shape":"circle"},"25":{"x":272,"y":104,"label":"s dfbsdfbsdfb","description":"","shape":"circle"},"26":{"x":314,"y":112,"label":" sdfbsdfbsdfb","description":"","shape":"circle"}},"quadrants":["TechniquesDDD","Platforms","Tools","Languages & Frameworks"]}';
+var defaultRadarJson = '{"mainTitle": "Test radar","blips":{"1":{"x":399,"y":449,"label":"AWS","shape":"circle"},"2":{"x":294,"y":477,"label":"GCP","shape":"circle"},"3":{"x":500,"y":358,"label":"Grafana","shape":"circle"},"4":{"x":386,"y":364,"label":"Trunk based development","shape":"circle"},"5":{"x":408,"y":319,"label":"dsfvdsf","description":"","shape":"circle"},"6":{"x":326,"y":78,"label":"sdfv","description":"","shape":"circle"},"7":{"x":304,"y":328,"label":"sdfv","description":"","shape":"circle"},"8":{"x":371,"y":114,"label":"sdfvsdv","description":"","shape":"circle"},"9":{"x":326,"y":285,"label":"sdfbsdfb","description":"","shape":"circle"},"10":{"x":299,"y":214,"label":"sdfbsdb","description":"","shape":"circle"},"11":{"x":180,"y":320,"label":"sdfbsdfbsdfb","description":"","shape":"circle"},"12":{"x":164,"y":257,"label":"sdfbsdfbsdfb","description":"","shape":"circle"},"13":{"x":326,"y":184,"label":"sdfbsdfbsdfb","description":"","shape":"circle"},"14":{"x":239,"y":241,"label":"sdfbsdfbdsb","description":"","shape":"circle"},"15":{"x":399,"y":230,"label":"sdbdsfbsdb sd fbsdf bdfsbsdfbsdfb sdfb","description":"","shape":"circle"},"16":{"x":262,"y":184,"label":"sdfbsd b sdfbsd","description":"","shape":"circle"},"17":{"x":286,"y":193,"label":"sdb sdfb","description":"","shape":"circle"},"18":{"x":381,"y":172,"label":"sdf bsdfb","description":"","shape":"circle"},"19":{"x":103,"y":347,"label":"sdf bsdfbsdfbsdf ","description":"","shape":"circle"},"20":{"x":354,"y":240,"label":"s bsdfbsd fbsdf","description":"","shape":"circle"},"21":{"x":193,"y":180,"label":"sd bsdfbsdfb sdfb","description":"","shape":"circle"},"22":{"x":250,"y":324,"label":" sdfbsdfb sdfbsdb","description":"","shape":"circle"},"23":{"x":426,"y":139,"label":"sdfb sdfb","description":"","shape":"circle"},"24":{"x":417,"y":75,"label":"s dfbsdfb","description":"","shape":"circle"},"25":{"x":272,"y":104,"label":"s dfbsdfbsdfb","description":"","shape":"circle"},"26":{"x":314,"y":112,"label":" sdfbsdfbsdfb","description":"","shape":"circle"}},"quadrants":[{"label":"Languages & Frameworks","blipsColor":"#4AA02C"},{"label":"Platforms","blipsColor":"#E56717"},{"label":"TechniquesDDD","blipsColor":"#0041C2"},{"label":"Tools","blipsColor":"#FF69B4"}]}';
 
 var width = 900;
 var height = 800; //window.innerHeight;
@@ -28,18 +28,20 @@ var arcs = [];
 
 var canEdit = false;
 
+var ringNamePrefix = "ring";
 var rings = [
-  {width: 130, color: '#999999', name: 'adopt', label: 'Adopt', blipsNumberingOrder: 1},
-  {width: 100, color: '#AAAAAA', name: 'trial', label: 'Trial', blipsNumberingOrder: 2},
-  {width: 90, color: '#BBBBBB', name: 'assess', label: 'Assess', blipsNumberingOrder: 3},
-  {width: 70, color: '#CCCCCC', name: 'hold', label: 'Hold', blipsNumberingOrder: 4}
+  {width: 130, color: '#999999', label: 'Adopt'},
+  {width: 100, color: '#AAAAAA', label: 'Trial'},
+  {width: 90, color: '#BBBBBB', label: 'Assess'},
+  {width: 70, color: '#CCCCCC', label: 'Hold'}
 ];
 
+var quadrantNamePrefix = "quadrant";
 var quadrants = [
-  {name: 'quadrant4', blipsColor: '#FF69B4', label: 'Quadrant 4', blipsNumberingOrder: 4},
-  {name: 'quadrant3', blipsColor: '#E56717', label: 'Quadrant 3', blipsNumberingOrder: 3},
-  {name: 'quadrant1', blipsColor: '#0041C2', label: 'Quadrant 1', blipsNumberingOrder: 1},
-  {name: 'quadrant2', blipsColor: '#4AA02C', label: 'Quadrant 2', blipsNumberingOrder: 2}
+  {blipsColor: '#0041C2', label: 'Quadrant 1'},
+  {blipsColor: '#4AA02C', label: 'Quadrant 2'},
+  {blipsColor: '#E56717', label: 'Quadrant 3'},
+  {blipsColor: '#FF69B4', label: 'Quadrant 4'}
 ];
 
 var detailsDivSuffix = "Details";
@@ -128,52 +130,6 @@ $( document ).ready(function() {
 
   document.getElementById('importRadarFileInputId').addEventListener('change', loadRadar, false);
 
-  for (var j = 0; j < quadrants.length ; j++) {
-    var newDiv = jQuery('<div/>', {
-      id: (quadrants[j].name + detailsDivSuffix),
-      class: 'detailsContainer'
-    });
-    var titleDiv = jQuery('<div/>', {
-      class: 'detailsTitle'
-    });
-    var detailsInternalDiv = jQuery('<div/>', {
-      id: (quadrants[j].name + detailsInternalDivSuffix),
-      class: 'detailsInternal'
-    });
-    titleDiv.text(quadrants[j].label);
-    $(newDiv).append(titleDiv);
-    $(newDiv).append(detailsInternalDiv);
-    $(titleDiv).css('background-color', quadrants[j].blipsColor);
-
-    var currentColor = $(titleDiv).css('background-color');
-    if (currentColor.startsWith('rgb(')) {
-      var newColor = "rgba(" + currentColor.substring(4, currentColor.indexOf(")")) + ", 0.3)"
-      $(titleDiv).css('background-color', newColor);
-    }
-
-    for (var k = 0; k < rings.length; k++) {
-      var ringDiv = jQuery('<div/>', {
-        class: 'detailsRing',
-        id: "details_" + quadrants[j].name + "_" + rings[k].name
-      });
-      var ringTitleDiv = jQuery('<div/>', {
-        class: 'detailsRingTitle'
-      });
-      ringTitleDiv.text(rings[k].label);
-      $(ringDiv).append(ringTitleDiv);
-      $(detailsInternalDiv).append(ringDiv);
-
-      addOrRemoveEmptyDetails(ringDiv);
-    }
-
-    if (j == 0 || j == quadrants.length - 1) {
-      $("#detailsRight").prepend(newDiv);
-    }
-    else {
-      $("#detailsLeft").prepend(newDiv);
-    }
-  }
-
   initNewBlipDialog();
   initViewBlipDialog();
   initEditBlipDialog();
@@ -239,6 +195,20 @@ function makeBlipsDraggable(theVal) {
   }
 }
 
+// Update the quadrants global variable with whatever is visible on the screen.
+function updateQuadrantsObject() {
+  $(".detailsTitle").each(function( index ) {
+    if (!canEdit) {
+      var visibleLabel = $(this).text();
+    }
+    else {
+      var visibleLabel = $( this ).next().val();
+    }
+    var quadrantIndex = parseInt($(this).attr('quadrantIndex'));
+    quadrants[quadrantIndex].label =  visibleLabel;
+  });
+}
+
 function makeDetailsTitleEditable(theVal) {
   var makeEditable = undefined;
   if (theVal === undefined) {
@@ -249,13 +219,17 @@ function makeDetailsTitleEditable(theVal) {
   }
   $(".detailsTitle").each(function( index ) {
     if (makeEditable) {
-      $( this ).hide();
-      $( this ).after($('<input/>').attr({ type: 'text', class: 'detailsTitleInput', value: $(this).text()}));
+      if ($( this ).next("input.detailsTitleInput").length == 0) {
+        $( this ).hide();
+        $( this ).after($('<input/>').attr({ type: 'text', class: 'detailsTitleInput', value: $(this).text()}));
+      }
     }
     else {
-      $( this ).text($( this ).next().val());
-      $( this ).next().remove();
-      $( this ).show();
+      if ($( this ).next("input.detailsTitleInput").length > 0) {
+        $( this ).text($( this ).next().val());
+        $( this ).next("input.detailsTitleInput").remove();
+        $( this ).show();
+      }
     }
   });
 }
@@ -270,46 +244,58 @@ function makeMainTitleEditable(theVal) {
   }
   $("#mainTitleInternalDiv").each(function( index ) {
     if (makeEditable) {
-      $( this ).hide();
-      $( this ).after($('<input/>').attr({ type: 'text', class: 'mainTitleInput', value: $(this).text()}));
+      if ($( this ).next("input.mainTitleInput").length == 0) {
+        $( this ).hide();
+        $( this ).after($('<input/>').attr({ type: 'text', class: 'mainTitleInput', value: $(this).text()}));
+      }
     }
     else {
-      $( this ).text($( this ).next().val());
-      $( this ).next().remove();
-      $( this ).show();
+      if ($( this ).next("input.mainTitleInput").length > 0) {
+        $( this ).text($( this ).next("input.mainTitleInput").val());
+        $( this ).next("input.mainTitleInput").remove();
+        $( this ).show();
+      }
     }
   });
 }
 
+function makeEditable() {
+  $("#addBlipButtonId").show();
+  $("#reorderBlipsButtonId").show();
+  $("#exportRadarButtonId").show();
+  $("#importRadarFileInputId").show();
+  $("#fileProxy").show();
+  makeBlipsDraggable();
+  makeDetailsTitleEditable();
+  makeMainTitleEditable();
+}
+
+function makeNotEditable() {
+  $("#addBlipButtonId").hide();
+  $("#reorderBlipsButtonId").hide();
+  $("#exportRadarButtonId").hide();
+  $("#importRadarFileInputId").hide();
+  $("#fileProxy").hide();
+  makeBlipsDraggable(false);
+  makeDetailsTitleEditable(false);
+  makeMainTitleEditable(false);
+}
 
 function toggleCanEdit() {
+  updateQuadrantsObject();
   if (!canEdit) {
-    $("#addBlipButtonId").show();
-    $("#reorderBlipsButtonId").show();
-    $("#exportRadarButtonId").show();
-    $("#importRadarFileInputId").show();
-    $("#fileProxy").show();
-    makeBlipsDraggable();
-    makeDetailsTitleEditable();
-    makeMainTitleEditable();
+    makeEditable();
   }
   else {
-    $("#addBlipButtonId").hide();
-    $("#reorderBlipsButtonId").hide();
-    $("#exportRadarButtonId").hide();
-    $("#importRadarFileInputId").hide();
-    $("#fileProxy").hide();
-    makeBlipsDraggable(false);
-    makeDetailsTitleEditable(false);
-    makeMainTitleEditable(false);
+    makeNotEditable();
   }
   canEdit = !canEdit;
 }
 
 function getQuadrantBlipsNumberingOrder(quadrantName) {
   for (var i = 0; i < quadrants.length; i++) {
-    if (quadrants[i].name == quadrantName) {
-      return quadrants[i].blipsNumberingOrder;
+    if ((quadrantNamePrefix + (i + 1)) == quadrantName) {
+      return i + 1;
     }
   }
   return undefined;
@@ -317,8 +303,8 @@ function getQuadrantBlipsNumberingOrder(quadrantName) {
 
 function getRingBlipsNumberingOrder(ringName) {
   for (var i = 0; i < rings.length; i++) {
-    if (rings[i].name == ringName) {
-      return rings[i].blipsNumberingOrder;
+    if ((ringNamePrefix + (i + 1)) == ringName) {
+      return i + 1;
     }
   }
   return undefined;
@@ -513,8 +499,71 @@ function getArc(shape) {
   return arcsLayer.getIntersection({x: shape.getAttr('x'), y: shape.getAttr('y')});
 }
 
+function addQuadrantDetailsDiv(j) {
+  var detailsContainerHeight = Math.max(140, Math.ceil(height / Math.ceil(quadrants.length / 2)));
+  var newDiv = jQuery('<div/>', {
+    id: (quadrantNamePrefix + (j + 1) + detailsDivSuffix),
+    class: 'detailsContainer',
+    style: 'height: ' + detailsContainerHeight + 'px;'
+  });
+  var titleDiv = jQuery('<div/>', {
+    class: 'detailsTitle',
+    quadrantIndex: j
+  });
+  var detailsInternalHeight = detailsContainerHeight - 40;
+  var detailsInternalDiv = jQuery('<div/>', {
+    id: (quadrantNamePrefix + (j + 1) + detailsInternalDivSuffix),
+    class: 'detailsInternal',
+    style: 'height: ' + detailsInternalHeight + 'px;'
+  });
+  titleDiv.text(quadrants[j].label);
+  $(newDiv).append(titleDiv);
+  $(newDiv).append(detailsInternalDiv);
+  $(titleDiv).css('background-color', quadrants[j].blipsColor);
+
+  var currentColor = $(titleDiv).css('background-color');
+  if (currentColor.startsWith('rgb(')) {
+    var newColor = "rgba(" + currentColor.substring(4, currentColor.indexOf(")")) + ", 0.3)"
+    $(titleDiv).css('background-color', newColor);
+  }
+
+  for (var k = 0; k < rings.length; k++) {
+    var ringDiv = jQuery('<div/>', {
+      class: 'detailsRing',
+      id: "details_" + quadrantNamePrefix + (j + 1) + "_" + ringNamePrefix + (k + 1)
+    });
+    var ringTitleDiv = jQuery('<div/>', {
+      class: 'detailsRingTitle'
+    });
+    ringTitleDiv.text(rings[k].label);
+    $(ringDiv).append(ringTitleDiv);
+    $(detailsInternalDiv).append(ringDiv);
+
+    addOrRemoveEmptyDetails(ringDiv);
+  }
+
+  if (j == 0 || j == quadrants.length - 1) {
+    $("#detailsRight").prepend(newDiv);
+  }
+  else {
+    $("#detailsLeft").prepend(newDiv);
+  }
+}
+
+function removeQuadrants() {
+  if (arcsLayer) {
+    arcsLayer.clear();
+  }
+  $(".detailsContainer").remove();
+}
+
 function addQuadrants() {
-  arcsLayer = new Konva.Layer();
+  // Reset existing quadrants first.
+  removeQuadrants();
+  if (!arcsLayer) {
+    var newArcsLayer = true;
+    arcsLayer = new Konva.Layer();
+  }
 
   for (var i = 0; i < rings.length; i++) {
     for (var j = 0; j < quadrants.length; j++) {
@@ -522,14 +571,19 @@ function addQuadrants() {
       for (var k = i - 1; k >= 0; k--) {
         innerRadius += rings[k].width;
       }
-      addQuadrant(arcsLayer, innerRadius, innerRadius + rings[i].width, 90, j * (360 / quadrants.length), rings[i].color, rings[i].name, quadrants[j].name, quadrants[j].blipsColor);
-      if (j == rings.length - 1) {
+      addQuadrant(arcsLayer, innerRadius, innerRadius + rings[i].width, 360 / quadrants.length, j * (360 / quadrants.length), rings[i].color, ringNamePrefix + (i + 1), quadrantNamePrefix + (j + 1), quadrants[j].blipsColor);
+      if (j == quadrants.length - 1) {
         addRingLabel(rings[i].label, 0, -innerRadius - rings[i].width, arcsLayer);
+      }
+      if (i == rings.length - 1) {
+        addQuadrantDetailsDiv(j);
       }
     }
   }
 
-  stage.add(arcsLayer);
+  if (newArcsLayer) {
+    stage.add(arcsLayer);
+  }
 
   /*
   var quadrantsLabelsLayer = new Konva.Layer();
@@ -1104,17 +1158,8 @@ function exportRadar() {
       blips[blipId] = {'x': x, 'y': y, 'label': t.getAttr('label'), 'description': t.getAttr('description'), 'shape': c.getAttr('shapeType')};
     }
     result['blips'] = blips;
-    var quadrants = [];
-    $(".detailsTitle").each(function( index ) {
-      // Take the value of the input field if we are in edit mode, from the div otherwise.
-      if (!canEdit) {
-        quadrants.push($(this).text());
-      }
-      else {
-        quadrants.push($( this ).next().val());
-      }
-    });
-
+    // This guarantees that whatever is exported is what the user sees on the screen.
+    updateQuadrantsObject();
     result['quadrants'] = quadrants;
     result['mainTitle'] = $("#mainTitleInternalDiv").text();
     var stringifyResult = JSON.stringify(result);
@@ -1130,6 +1175,12 @@ function loadRadarFromJson(json) {
   //console.log("Loading radar from json!")
   var maxBlipId = 0;
   clearBlips();
+
+  quadrants = json['quadrants'];
+  addQuadrants();
+  // Avoids issue where first blip is not colored.
+  arcsLayer.draw();
+
   var blips = json['blips'];
   //console.log("JSON: " + JSON.stringify(json));
   for (var key in blips) {
@@ -1139,29 +1190,21 @@ function loadRadarFromJson(json) {
     }
     addBlip(blips[key]['x'], blips[key]['y'], blipId, blips[key]['label'], blips[key]['description'], blips[key]['shape']);
   }
-  var quadrants = json['quadrants'];
-  $(".detailsTitle").each(function( index ) {
-    if (!canEdit) {
-      $( this ).text(quadrants[index]);
-    }
-    else {
-      console.log("Details title: " + quadrants[index]);
-      $( this ).next("input").val(quadrants[index]);
-    }
-  });
+
 
   if (!canEdit) {
     $("#mainTitleInternalDiv").text(json['mainTitle']);
+    makeNotEditable();
   }
   else {
     $("#mainTitleInternalDiv").next("input").val(json['mainTitle']);
+    makeEditable();
   }
 
   newBlipId = maxBlipId;
 }
 
 function loadRadar(evt) {
-  console.log("TADADA");
   if (window.File && window.FileReader && window.FileList && window.Blob) {
     var files = evt.target.files; // FileList object
     //Retrieve the first (and only!) File from the FileList object
