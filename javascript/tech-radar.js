@@ -36,6 +36,7 @@ var rings = [
   {width: 70, color: '#CCCCCC', label: 'Hold'}
 ];
 
+var startAngle = 90;
 var quadrantNamePrefix = "quadrant";
 var quadrants = [
   {blipsColor: '#0041C2', label: 'Quadrant 1'},
@@ -222,16 +223,72 @@ function makeDetailsTitleEditable(theVal) {
       if ($( this ).next("input.detailsTitleInput").length == 0) {
         $( this ).hide();
         $( this ).after($('<input/>').attr({ type: 'text', class: 'detailsTitleInput', value: $(this).text()}));
+
+        var quadrantIndex = $(this).attr('quadrantIndex');
+
+        var colorInput = $('<input/>');
+        colorInput.attr({
+                          type: 'text',
+                          class: 'pickBlipsColorInput',
+                          value: '',
+                          readonly: true,
+                          onchange: "blipColorOnChange(" + quadrantIndex + ", this.value)"
+                        });
+        $( this ).next("input.detailsTitleInput").after(colorInput);
+        var hiddenInputId = 'pickBlipsColorHiddenId' + quadrantIndex;
+        $( this ).next("input.detailsTitleInput").next("input.pickBlipsColorInput").after($('<input/>').attr({
+                          id: hiddenInputId,
+                          class: 'pickBlipsColorInputHidden',
+                          type: 'hidden',
+                          value: '',
+                          readonly: true,
+                          onchange: "blipColorOnChange(" + quadrantIndex + ", this.value)"
+                        }));
+        var picker = new jscolor(colorInput[0], {closable: true, closeText: "Close", value: quadrants[quadrantIndex].blipsColor, valueElement: hiddenInputId});
+
+        // Do not allow to delete the last quadrant (i.e. there must be at least one).
+        if (quadrants.length > 1) {
+          $( this ).next("input.detailsTitleInput").next("input.pickBlipsColorInput").next("input.pickBlipsColorInputHidden").after($('<button/>').attr({ id: "deleteQuadrantButtonId" + quadrantIndex, class: "deleteQuadrantButton", onclick: 'deleteQuadrant(' + quadrantIndex + ');'}));
+          $("#deleteQuadrantButtonId" + quadrantIndex).button({
+            icon: "ui-icon-trash"
+          });
+        }
       }
     }
     else {
       if ($( this ).next("input.detailsTitleInput").length > 0) {
         $( this ).text($( this ).next().val());
+        $( this ).next("input.detailsTitleInput").next("input.pickBlipsColorInput").next("input.pickBlipsColorInputHidden").next("button.deleteQuadrantButton").remove();
+        $( this ).next("input.detailsTitleInput").next("input.pickBlipsColorInput").next("input.pickBlipsColorInputHidden").remove();
+        $( this ).next("input.detailsTitleInput").next("input.pickBlipsColorInput").remove();
         $( this ).next("input.detailsTitleInput").remove();
         $( this ).show();
       }
     }
   });
+}
+
+function blipColorOnChange(quadrantIndex, theColor) {
+  //console.log("blipColorOnChange: " + quadrantIndex + " --> " + theColor);
+  quadrants[quadrantIndex].blipsColor = "#" + theColor;
+  addQuadrants();
+  // Avoids issue where first blip is not colored.
+  arcsLayer.draw();
+  $.each(stage.find(".blipGroup"), function( key, theGroup ) {
+    colorBlipAndSetupDetailsDiv(theGroup);
+  });
+  makeDetailsTitleEditable();
+}
+
+function deleteQuadrant(quadrantIndex) {
+  quadrants.splice(quadrantIndex, 1);
+  addQuadrants();
+  // Avoids issue where first blip is not colored.
+  arcsLayer.draw();
+  $.each(stage.find(".blipGroup"), function( key, theGroup ) {
+    colorBlipAndSetupDetailsDiv(theGroup);
+  });
+  makeDetailsTitleEditable();
 }
 
 function makeMainTitleEditable(theVal) {
@@ -252,6 +309,7 @@ function makeMainTitleEditable(theVal) {
     else {
       if ($( this ).next("input.mainTitleInput").length > 0) {
         $( this ).text($( this ).next("input.mainTitleInput").val());
+        document.title = $(this).text();
         $( this ).next("input.mainTitleInput").remove();
         $( this ).show();
       }
@@ -262,6 +320,7 @@ function makeMainTitleEditable(theVal) {
 function makeEditable() {
   $("#addBlipButtonId").show();
   $("#reorderBlipsButtonId").show();
+  $("#addQuadrantButtonId").show();
   $("#exportRadarButtonId").show();
   $("#importRadarFileInputId").show();
   $("#fileProxy").show();
@@ -273,6 +332,7 @@ function makeEditable() {
 function makeNotEditable() {
   $("#addBlipButtonId").hide();
   $("#reorderBlipsButtonId").hide();
+  $("#addQuadrantButtonId").hide();
   $("#exportRadarButtonId").hide();
   $("#importRadarFileInputId").hide();
   $("#fileProxy").hide();
@@ -499,7 +559,7 @@ function getArc(shape) {
   return arcsLayer.getIntersection({x: shape.getAttr('x'), y: shape.getAttr('y')});
 }
 
-function addQuadrantDetailsDiv(j) {
+function addQuadrantDetailsDiv(j, onTheLeft) {
   var detailsContainerHeight = Math.max(140, Math.ceil(height / Math.ceil(quadrants.length / 2)));
   var newDiv = jQuery('<div/>', {
     id: (quadrantNamePrefix + (j + 1) + detailsDivSuffix),
@@ -542,19 +602,37 @@ function addQuadrantDetailsDiv(j) {
     addOrRemoveEmptyDetails(ringDiv);
   }
 
-  if (j == 0 || j == quadrants.length - 1) {
-    $("#detailsRight").prepend(newDiv);
+  if (onTheLeft) {
+    $("#detailsLeft").append(newDiv);
   }
   else {
-    $("#detailsLeft").prepend(newDiv);
+    $("#detailsRight").append(newDiv);
   }
 }
 
 function removeQuadrants() {
   if (arcsLayer) {
-    arcsLayer.clear();
+    $.each(arcsLayer.find("Arc"), function( key, theArc ) {
+      theArc.remove();
+    });
   }
   $(".detailsContainer").remove();
+}
+
+function compareAngles(a, b) {
+  var startAngleRadiansA = a.startAngle * (Math.PI / 180.0);
+  var startAngleRadiansB = b.startAngle * (Math.PI / 180.0);
+  //console.log("Angle a: " + a.startAngle + " --> " + startAngleRadiansA);
+  //console.log("Angle b: " + b.startAngle + " --> " + startAngleRadiansB);
+  if (Math.sin(startAngleRadiansA) < Math.sin(startAngleRadiansB)) {
+    return -1;
+  }
+  else if (Math.sin(startAngleRadiansA) > Math.sin(startAngleRadiansB)) {
+    return 1;
+  }
+  else {
+    return 0;
+  }
 }
 
 function addQuadrants() {
@@ -564,21 +642,41 @@ function addQuadrants() {
     var newArcsLayer = true;
     arcsLayer = new Konva.Layer();
   }
-
+  var startAnglesLeft = [];
+  var startAnglesRight = [];
   for (var i = 0; i < rings.length; i++) {
     for (var j = 0; j < quadrants.length; j++) {
       var innerRadius = 0;
       for (var k = i - 1; k >= 0; k--) {
         innerRadius += rings[k].width;
       }
-      addQuadrant(arcsLayer, innerRadius, innerRadius + rings[i].width, 360 / quadrants.length, j * (360 / quadrants.length), rings[i].color, ringNamePrefix + (i + 1), quadrantNamePrefix + (j + 1), quadrants[j].blipsColor);
+      addQuadrant(arcsLayer, innerRadius, innerRadius + rings[i].width, startAngle, 360 / quadrants.length, j * (360 / quadrants.length), rings[i].color, ringNamePrefix + (i + 1), quadrantNamePrefix + (j + 1), quadrants[j].blipsColor);
       if (j == quadrants.length - 1) {
         addRingLabel(rings[i].label, 0, -innerRadius - rings[i].width, arcsLayer);
       }
-      if (i == rings.length - 1) {
-        addQuadrantDetailsDiv(j);
+      if (i == 0) {
+        var quadrantStartAngle = startAngle + (j * (360 / quadrants.length));
+        var startAngleObject = {"startAngle": quadrantStartAngle, "quadrantIndex": j };
+        // Because 0 is at 3 o'clock  (and not at 12 o'clock)
+        if (quadrantStartAngle >= 90 && quadrantStartAngle < 270) {
+          startAnglesLeft.push(startAngleObject);
+        }
+        else {
+          startAnglesRight.push(startAngleObject);
+        }
       }
     }
+  }
+
+
+  // Add details div after the arcs so that we can poperly decide where to place them.
+  startAnglesLeft.sort(compareAngles);
+  startAnglesRight.sort(compareAngles);
+  for (var i = 0; i < startAnglesLeft.length; i++) {
+      addQuadrantDetailsDiv(startAnglesLeft[i].quadrantIndex, true);
+  }
+  for (var i = 0; i < startAnglesRight.length; i++) {
+      addQuadrantDetailsDiv(startAnglesRight[i].quadrantIndex, false);
   }
 
   if (newArcsLayer) {
@@ -1122,20 +1220,21 @@ function clearBlips() {
   }
 }
 
-function addQuadrant(layer, innerRadius, outerRadius, angle, rotation, fill, ringName, quadrantName, blipsColor) {
+function addQuadrant(layer, innerRadius, outerRadius, startAngle, angle, rotation, fill, ringName, quadrantName, blipsColor) {
   var arc = new Konva.Arc({
     x: stage.getWidth() / 2,
     y: stage.getHeight() / 2,
-    innerRadius: innerRadius,
+    innerRadius: innerRadius + 0,
     outerRadius: outerRadius,
     angle: angle,
-    rotation: rotation,
+    rotation: startAngle + rotation,
     fill: fill,
     stroke: 'black',
     strokeWidth: 0,
     ringName: ringName,
     quadrantName: quadrantName,
-    blipsColor: blipsColor
+    blipsColor: blipsColor,
+    strokeEnabled: quadrants.length > 1
   });
 
   arcs.push(arc);
@@ -1194,10 +1293,12 @@ function loadRadarFromJson(json) {
 
   if (!canEdit) {
     $("#mainTitleInternalDiv").text(json['mainTitle']);
+    document.title = json['mainTitle'];
     makeNotEditable();
   }
   else {
     $("#mainTitleInternalDiv").next("input").val(json['mainTitle']);
+    document.title = json['mainTitle'];
     makeEditable();
   }
 
@@ -1285,6 +1386,17 @@ function fixTmpBlipIds() {
   $.each(toSetupBlips, function( key, theBlip ) {
     colorBlipAndSetupDetailsDiv(theBlip);
   });
+}
+
+function addQuadrantButton() {
+  quadrants.push({blipsColor: '#FFFFFF', label: 'New quadrant'});
+  addQuadrants();
+  // Avoids issue where first blip is not colored.
+  arcsLayer.draw();
+  $.each(stage.find(".blipGroup"), function( key, theGroup ) {
+    colorBlipAndSetupDetailsDiv(theGroup);
+  });
+  makeDetailsTitleEditable();
 }
 
 function reorderBlips() {

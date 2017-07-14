@@ -54,6 +54,16 @@ body {
   overflow-y: scroll;
 }
 
+.detailsTitleInput {
+  width: 120px;
+}
+
+.pickBlipsColorInput {
+  width: 20px;
+  margin-left: 5px;
+  cursor: pointer;
+}
+
 .detailsRingTitle {
   font-size: 16px;
   font-weight: bold;
@@ -91,4 +101,8 @@ div.blipForm .validateTips { border: 1px solid transparent; padding: 0.3em; }
 
 .ui-state-highlight {
   border: 0px!important;
+}
+
+.deleteQuadrantButton {
+  margin-left: 5px;
 }

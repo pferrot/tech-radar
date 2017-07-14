@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>LS Tech Radar</title>
+<title>Tech Radar</title>
 <link rel="stylesheet" type="text/css" href="css/tech-radar.css">
 <script src="javascript/jquery-3.2.1.min.js"></script>
 
@@ -16,6 +16,8 @@
 <script src="javascript/linkifyjs/linkify.min.js"></script>
 <script src="javascript/linkifyjs/linkify-jquery.min.js"></script>
 
+<script src="javascript/jscolor-2.0.4.js"></script>
+
 <script src="javascript/tech-radar.js"></script>
 </head>
 
@@ -23,6 +25,7 @@
 <div id="buttonsDiv">
 <button id="addBlipButtonId" class="normalButton" type="button" onclick="openAddNewBlipDialog();" style="display: none;">Add blip...</button>
 <button id="reorderBlipsButtonId" class="normalButton" type="button" onclick="reorderBlips();" style="display: none;">Reorder blips</button>
+<button id="addQuadrantButtonId" class="normalButton" type="button" onclick="addQuadrantButton();" style="display: none;">Add quadrant</button>
 <button id="exportRadarButtonId" class="normalButton" type="button" onclick="exportRadar();" style="display: none;">Export radar...</button>
 <button id="fileProxy" type="button" class="normalButton" onclick="fileUpload();" style="display: none;">Import radar...</button>
 <div style="display: none;">
